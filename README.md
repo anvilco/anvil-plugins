@@ -7,6 +7,7 @@ Plugins that help developers integrate [Anvil's](https://www.useanvil.com) docum
 | Plugin | How it helps |
 |--------|-------------|
 | **[anvil-document-sdk](./anvil-document-sdk)** | Implement Anvil API integrations — PDF Filling, HTML-to-PDF Generation, Etch E-Sign, and Workflows — into any existing Node.js or TypeScript codebase. |
+| **[dropbox-anvil-migration](./dropbox-anvil-migration)** | Migrate existing DropboxSign/HelloSign e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, migrates templates, rewrites code, and verifies the migration. |
 
 ## Installation
 
@@ -35,6 +36,12 @@ then run
 /plugin install anvil-document-sdk@anvil-plugins
 ```
 
+or
+
+```bash
+/plugin install dropbox-anvil-migration@anvil-plugins
+```
+
 ## What's Inside
 
 ### anvil-document-sdk
@@ -53,6 +60,24 @@ The skill includes:
 - Reference files for each product with production-ready code patterns
 - Bundled migration script for bulk PDF template uploads with AI-powered field detection
 - Best practices for storage, webhooks, rate limiting, and security
+
+### dropbox-anvil-migration
+
+A guided migration skill that walks developers through replacing DropboxSign (HelloSign) e-signature integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for all DropboxSign/HelloSign SDK usage, API calls, env vars, webhooks, and database references
+- **API Mapping** — Maps DropboxSign calls to Anvil equivalents with before/after code examples
+- **Template Migration** — Downloads templates from DropboxSign, uploads to Anvil, generates DB migration scripts
+- **Code Rewriting** — Replaces SDK calls, webhook handlers, embedded signing, and environment variables
+- **Verification** — Guides end-to-end testing and cleanup of old dependencies
+
+The skill includes:
+
+- Complete API mapping reference (DropboxSign → Anvil)
+- Feature parity analysis with workarounds for each gap
+- Bundled template download script (standalone, no external deps)
+- Template migration guide with database migration generation
+- References the `anvil-document-sdk` skill for Anvil implementation patterns
 
 ## Contributing
 
