@@ -1,0 +1,19 @@
+{
+  "name": "anvil-document-sdk",
+  "version": "1.0.0",
+  "description": "Implement Anvil API integrations (PDF Filling, HTML-to-PDF Generation, Etch E-Sign, Workflows) into any existing Node.js or TypeScript codebase. Guides developers through discovery, implementation planning, and production-ready code generation for document automation using the Anvil platform.",
+  "author": {
+    "name": "Anvil"
+  },
+  "homepage": "https://www.useanvil.com",
+  "keywords": [
+    "anvil",
+    "pdf",
+    "esign",
+    "e-signature",
+    "document-automation",
+    "pdf-filling",
+    "html-to-pdf",
+    "workflows"
+  ]
+}

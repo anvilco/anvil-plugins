@@ -1,0 +1,16 @@
+{
+  "name": "anvil-plugins",
+  "owner": {
+    "name": "Anvil"
+  },
+  "plugins": [
+    {
+      "name": "anvil-document-sdk",
+      "source": "./anvil-document-sdk",
+      "description": "Implement Anvil API integrations — PDF Filling, HTML-to-PDF Generation, Etch E-Sign, and Workflows — into any existing Node.js or TypeScript codebase. Guides developers through discovery, planning, and production-ready code generation.",
+      "author": {
+        "name": "Anvil"
+      }
+    }
+  ]
+}
