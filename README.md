@@ -32,7 +32,7 @@ This repository is a plugin marketplace. To add it to Claude Cowork:
 then run
 
 ```bash
-/plugin install anvil-document-sdk@anvil-plugins
+/plugin install <plugin-name>@anvil-plugins
 ```
 
 ## What's Inside
