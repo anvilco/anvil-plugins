@@ -15,14 +15,24 @@ Plugins that help developers integrate [Anvil's](https://www.useanvil.com) docum
 This repository is a plugin marketplace. To add it to Claude Cowork:
 
 1. Open Claude Cowork
-2. Go to Settings → Plugins
-3. Add this repository as a marketplace source: `useanvil/anvil-plugins`
-4. Browse and install the plugins you need
+2. Go to `Customize` -  in the left hand side nav bar
+3. Click on `Browse plugins`
+4. Click on the "Personal" tab
+5. Click on the `+` button
+6. Select `Add marketplace from GitHub`
+7. Add this url as the source: `anvilco/anvil-plugins` 
+8. Install the `Anvil document sdk` plugin
 
-### From Claude Code
+### From Claude Code Instance
 
 ```bash
-claude plugin add --from useanvil/anvil-plugins anvil-document-sdk
+/plugin marketplace add anvilco/anvil-plugins
+```
+
+then run
+
+```bash
+/plugin install anvil-document-sdk@anvil-plugins
 ```
 
 ## What's Inside
