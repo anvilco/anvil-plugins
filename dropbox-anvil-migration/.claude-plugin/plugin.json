@@ -1,0 +1,19 @@
+{
+  "name": "dropbox-anvil-migration",
+  "version": "1.0.0",
+  "description": "Migrate existing DropboxSign/HelloSign e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, migrates templates, rewrites code, and verifies the migration end-to-end.",
+  "author": {
+    "name": "Anvil"
+  },
+  "homepage": "https://www.useanvil.com",
+  "keywords": [
+    "dropboxsign",
+    "hellosign",
+    "migration",
+    "anvil",
+    "etch",
+    "esign",
+    "e-signature",
+    "document-automation"
+  ]
+}
