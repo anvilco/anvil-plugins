@@ -13,6 +13,19 @@ description: >
 
 You are helping a developer integrate Anvil's APIs into their existing codebase. Anvil provides four core capabilities — PDF Filling, PDF Generation (HTML/CSS to PDF), Etch E-Sign, and Workflows — all accessed through a single Node.js client library. Your job is to understand what the developer needs, figure out where it fits in their codebase, and write production-ready integration code.
 
+## Package Manager Detection
+
+Before running any install commands, **detect the package manager** the developer's project uses by checking for lock files in the project root:
+
+- `bun.lockb` or `bun.lock` → use **bun** (e.g., `bun add @anvilco/anvil`)
+- `pnpm-lock.yaml` → use **pnpm** (e.g., `pnpm add @anvilco/anvil`)
+- `yarn.lock` → use **yarn** (e.g., `yarn add @anvilco/anvil`)
+- `package-lock.json` → use **npm** (e.g., `npm install @anvilco/anvil`)
+
+If no lock file is found, check for a `packageManager` field in `package.json`. If still ambiguous, default to **npm**.
+
+Use the detected package manager's install command consistently for all dependency installations throughout the integration. In the instructions below, `npm install` is used as a placeholder — **always substitute the detected package manager's equivalent command**.
+
 ## Quick Start vs. Full Implementation
 
 When a developer is first implementing Anvil, **always give them the choice** between a Quick Start and jumping straight into their real use case. Ask: **"Would you like to try a 5-minute quick start first to make sure everything is wired up correctly? Or would you prefer to jump straight into implementing your actual use case?"**
@@ -63,10 +76,11 @@ Wait for confirmation before proceeding. Do not ask them to paste the key into t
 
 ### Step 4: Write the fill code
 
-Install the dependency and create a minimal fill function:
+Install the dependency (using the detected package manager) and create a minimal fill function:
 
 ```bash
-npm install @anvilco/anvil
+# Use the detected package manager (see Package Manager Detection above)
+# e.g., npm install @anvilco/anvil / yarn add @anvilco/anvil / pnpm add @anvilco/anvil / bun add @anvilco/anvil
 ```
 
 ```typescript
@@ -331,8 +345,8 @@ If they want to migrate:
 3. **Run the migration script.** Copy `scripts/migrate-pdfs-to-anvil.ts` into the developer's project and run it:
 
    ```bash
-   # Install dependency if not already present
-   npm install @anvilco/anvil
+   # Install dependency if not already present (use detected package manager)
+   # e.g., npm install @anvilco/anvil / yarn add @anvilco/anvil / pnpm add @anvilco/anvil / bun add @anvilco/anvil
 
    # Run the migration (with schema for field aliases)
    npx ts-node scripts/migrate-pdfs-to-anvil.ts --dir ./path/to/pdfs --schema ./extracted-schema.json
@@ -401,7 +415,7 @@ This step is optional — the integration works fine without it — but it makes
 
 Once you understand the developer's needs, create a clear implementation plan before writing code. The plan should cover:
 
-1. **Dependencies to install** — which npm packages
+1. **Dependencies to install** — which packages (using the detected package manager)
 2. **Files to create or modify** — with specific paths in their codebase
 3. **Database changes** (if needed) — a table or columns to associate Anvil EIDs with internal models
 4. **Environment variables** — what to add to `.env`
@@ -416,9 +430,9 @@ Present this plan and get approval before writing code.
 
 Every Anvil integration starts with:
 
-1. **Install the client library:**
+1. **Install the client library** (using the detected package manager):
    ```bash
-   npm install @anvilco/anvil
+   # e.g., npm install @anvilco/anvil / yarn add @anvilco/anvil / pnpm add @anvilco/anvil / bun add @anvilco/anvil
    ```
 
 2. **Create an Anvil service module.** Place it where the developer specified (e.g., `src/services/anvil.ts` or `lib/anvil/client.ts`). This module initializes the client and exports product-specific functions:
@@ -435,9 +449,9 @@ Every Anvil integration starts with:
 
    The API key comes from an environment variable. Remind the developer to add `ANVIL_API_KEY=their_key_here` to their `.env` file and ensure `.env` is in `.gitignore`.
 
-3. **If using React for embedded UIs**, also install the embed component:
+3. **If using React for embedded UIs**, also install the embed component (using the detected package manager):
    ```bash
-   npm install @anvilco/anvil-embed-frame
+   # e.g., npm install @anvilco/anvil-embed-frame / yarn add @anvilco/anvil-embed-frame / pnpm add @anvilco/anvil-embed-frame / bun add @anvilco/anvil-embed-frame
    ```
    `AnvilEmbedFrame` handles e-signature embedding, workflow embedding, and embedded builders. It replaces the older `@anvilco/react-signature-frame` (which only supported e-sign).
 
@@ -475,7 +489,7 @@ Store the API key as an environment variable (`ANVIL_API_KEY`). The Anvil client
 Anvil provides RSA encryption keys and a dedicated encryption library (`@anvilco/encryption`) for securing data in transit. When sending sensitive information (PII, SSNs, financial data) to Anvil, use encryption:
 
 1. Generate an RSA keypair from your organization's settings page in the Anvil dashboard
-2. Install the encryption helper: `npm install @anvilco/encryption`
+2. Install the encryption helper using the detected package manager (e.g., `npm install @anvilco/encryption` / `yarn add @anvilco/encryption` / `pnpm add @anvilco/encryption` / `bun add @anvilco/encryption`)
 3. Use `encryptRSA` to encrypt payloads before sending them to Anvil
 
 ```typescript
@@ -594,7 +608,7 @@ form.append('0', fs.createReadStream('./template.pdf'), {
 const response = await fetch('https://graphql.useanvil.com', {
   method: 'POST',
   headers: {
-    Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+    Authorization: `Bearer ${apiKey}`,
     ...form.getHeaders(),
   },
   body: form,
