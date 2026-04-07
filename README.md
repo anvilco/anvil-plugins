@@ -42,6 +42,25 @@ or
 /plugin install dropbox-anvil-migration@anvil-plugins
 ```
 
+## Authentication
+
+Each plugin connects to Anvil's MCP server at `mcp.useanvil.com` using Bearer authentication. You'll need to set the `ANVIL_BEARER_TOKEN` environment variable before using any plugin.
+
+1. Get your API key from [Anvil's API Settings](https://app.useanvil.com) under **Organization Settings > API Settings**
+2. Set the environment variable:
+
+   **Option A — `.env` file** (recommended):
+   ```
+   ANVIL_BEARER_TOKEN=<your-anvil-api-key>
+   ```
+
+   **Option B — Shell export** (quick test):
+   ```bash
+   export ANVIL_BEARER_TOKEN=<your-anvil-api-key>
+   ```
+
+The plugins' `.mcp.json` files are pre-configured to read `ANVIL_BEARER_TOKEN` from your environment and pass it as a `Bearer` token in the `Authorization` header.
+
 ## What's Inside
 
 ### anvil-document-sdk
