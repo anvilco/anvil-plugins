@@ -2,7 +2,10 @@
   "mcpServers": {
     "anvil": {
       "type": "http",
-      "url": "https://mcp.useanvil.com"
+      "url": "https://mcp.useanvil.com",
+      "headers": {
+        "Authorization": "Bearer ${ANVIL_BEARER_TOKEN}"
+      }
     }
   }
 }
