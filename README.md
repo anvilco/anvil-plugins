@@ -44,22 +44,29 @@ or
 
 ## Authentication
 
-Each plugin connects to Anvil's MCP server at `mcp.useanvil.com` using Bearer authentication. You'll need to set the `ANVIL_BEARER_TOKEN` environment variable before using any plugin.
+Each plugin connects to Anvil's MCP server at `mcp.useanvil.com`, which supports OAuth. No API key or environment variable is needed.
+
+The first time you use a plugin, run:
+
+```bash
+/mcp
+```
+
+then select the `anvil` server and complete the sign-in flow in your browser. Claude Code stores the credentials and reuses them in future sessions.
+
+### Headless / CI / Agent SDK
+
+OAuth requires an interactive session to complete the browser flow. In environments without one — CI pipelines, `claude -p` on a machine that has never authenticated interactively, or the Claude Agent SDK — configure the server yourself with an API key instead:
 
 1. Get your API key from [Anvil's API Settings](https://app.useanvil.com) under **Organization Settings > API Settings**
-2. Set the environment variable:
+2. Add the server with a Bearer token header:
 
-   **Option A — `.env` file** (recommended):
-   ```
-   ANVIL_BEARER_TOKEN=<your-anvil-api-key>
-   ```
-
-   **Option B — Shell export** (quick test):
    ```bash
-   export ANVIL_BEARER_TOKEN=<your-anvil-api-key>
+   claude mcp add --transport http anvil https://mcp.useanvil.com \
+     --header "Authorization: Bearer $ANVIL_BEARER_TOKEN"
    ```
 
-The plugins' `.mcp.json` files are pre-configured to read `ANVIL_BEARER_TOKEN` from your environment and pass it as a `Bearer` token in the `Authorization` header.
+   Agent SDK users should pass the same `Authorization` header in the server's `headers` config.
 
 ## What's Inside
 
