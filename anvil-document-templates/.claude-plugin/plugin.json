@@ -1,0 +1,20 @@
+{
+  "name": "anvil-document-templates",
+  "version": "1.0.0",
+  "description": "Create and manage Anvil document templates (Casts) at scale. Bulk-uploads PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review.",
+  "author": {
+    "name": "Anvil"
+  },
+  "homepage": "https://www.useanvil.com",
+  "keywords": [
+    "anvil",
+    "templates",
+    "cast",
+    "createCast",
+    "castEid",
+    "document-ai",
+    "pdf",
+    "field-detection",
+    "document-automation"
+  ]
+}

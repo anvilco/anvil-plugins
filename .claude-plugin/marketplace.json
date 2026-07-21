@@ -19,6 +19,14 @@
       "author": {
         "name": "Anvil"
       }
+    },
+    {
+      "name": "anvil-document-templates",
+      "source": "./anvil-document-templates",
+      "description": "Create and manage Anvil document templates (Casts) at scale. Bulk-uploads PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review.",
+      "author": {
+        "name": "Anvil"
+      }
     }
   ]
 }
