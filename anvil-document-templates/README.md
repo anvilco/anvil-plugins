@@ -6,7 +6,7 @@ A Claude plugin that helps developers create and manage Anvil document templates
 
 - **Bulk Template Creation** — Turns a folder of PDFs into Anvil templates via the `createCast` mutation
 - **Document AI Field Detection** — Auto-detects form fields on each PDF (`detectBoxesAdvanced` + `advancedDetectFields`)
-- **Field Aliases (data schema)** — Applies your own field names from a single-column CSV so detected fields map to your data model
+- **Field Aliases (data schema)** — Applies your own field names, types, and descriptions from a `fieldAlias,fieldName,fieldType,fieldDescription` CSV so detected fields map to your data model
 - **Graceful Fallback** — Detects when a plan lacks Document AI and retries with standard detection, without masking unrelated errors
 - **Manifest + Review** — Writes a filename → `castEid` manifest and opens each new template in edit mode for review
 

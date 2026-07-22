@@ -8,6 +8,17 @@
  * detected fields to) are read from a CSV file and passed up in the createCast
  * mutation.
  *
+ * The aliases CSV has four columns: fieldAlias, fieldName, fieldType,
+ * fieldDescription.
+ *   - fieldAlias       the alias id (aliasId) assigned to the detected field —
+ *                      required; used as the key in the aliasIds object
+ *   - fieldName        optional human-readable label for the field (Anvil `name`)
+ *   - fieldType        optional Anvil field type (e.g. shortText, date, email)
+ *   - fieldDescription optional description Document AI uses to tag/match the field
+ * These are sent as the `aliasIds` object (keyed by fieldAlias), and the set of
+ * fieldAliases is also sent as `allowedAliasIds` so the template is restricted
+ * to only the allowed aliases.
+ *
  * Usage:
  *   npx ts-node create-casts.ts --dir ./pdfs --aliases ./field-aliases.csv
  *   npx ts-node create-casts.ts --dir ./pdfs                 # no aliases
@@ -19,11 +30,12 @@
  *   ANVIL_API_KEY set in the environment (or pass --api-key)
  *
  * What this script does:
- *   1. Reads field aliases from a single-column CSV (if provided)
+ *   1. Reads field aliases (name/type/description) from a CSV (if provided)
  *   2. Scans a directory for PDF files
  *   3. Uploads each PDF to Anvil via the createCast GraphQL mutation, with
  *      Document AI field detection enabled (detectBoxesAdvanced +
- *      advancedDetectFields) and the CSV aliases passed as aliasIds
+ *      advancedDetectFields), the CSV aliases passed as the aliasIds object,
+ *      and their ids passed as allowedAliasIds to restrict allowed fields
  *   4. Uses multipart GraphQL upload via Anvil.prepareGraphQLFile()
  *   5. Writes a manifest (JSON) mapping filenames to their new castEids
  *
@@ -43,7 +55,7 @@ import { spawn } from 'child_process'
 interface Config {
   /** Directory containing PDF files to upload */
   pdfDir: string
-  /** Optional path to a CSV file listing field aliases (one per line) */
+  /** Optional path to a CSV file describing field aliases (see readAliasesFromCSV) */
   aliasesPath?: string
   /** Anvil API key (falls back to ANVIL_API_KEY env var) */
   apiKey?: string
@@ -70,30 +82,186 @@ interface CastResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Reads field aliases from a single-column CSV file. Behavior:
- *   - takes the first column of each row (ignores any trailing columns)
- *   - trims whitespace and surrounding quotes, drops blank lines
- *   - skips a leading header cell if it is `fieldAlias` or `alias`
- *     (case-insensitive)
- *
- * Returns a flat array of alias strings.
+ * A single field alias parsed from the schema CSV. `id` (from the CSV's
+ * `fieldAlias` column) becomes the field's `aliasId` in Anvil and the key in
+ * the `aliasIds` object. `name`, `type`, and `description` describe the field
+ * so Document AI can tag it on the PDF, give it a readable label, and assign
+ * the right type.
  */
-function readAliasesFromCSV(csvPath: string): string[] {
-  const raw = fs.readFileSync(csvPath, 'utf-8')
+interface FieldAlias {
+  /** Field alias id (aliasId) — the key in aliasIds and the fill/reference id */
+  id: string
+  /** Optional human-readable display label for the field (Anvil's `name`) */
+  name?: string
+  /** Optional Anvil field type (see VALID_FIELD_TYPES) */
+  type?: string
+  /** Optional natural-language description used by Document AI to map the field */
+  description?: string
+}
 
-  const cells = raw
-    .split(/\r?\n/)
-    .map((line) => line.split(',')[0]) // first column only
-    .map((cell) => cell.trim().replace(/^"(.*)"$/, '$1').trim())
-    .filter((cell) => cell.length > 0)
+/**
+ * Anvil's supported field types. Used to validate the `fieldType` column; an
+ * unrecognized value is dropped (with a warning) rather than sent to the API.
+ * See https://www.useanvil.com/docs/api/pdf-templates/#auto-mapping-pdf-fields-with-ai
+ */
+// The exact set the createCast `aliasIds[].type` accepts, taken from the API's
+// own ValidationError response (it enumerates the allowed values). This is
+// narrower than the general object-references docs — e.g. radioGroup / charList
+// / compoundSelect are NOT accepted here — so keep it synced to what createCast
+// actually rejects, not the docs page.
+const VALID_FIELD_TYPES = new Set([
+  'shortText', 'longText', 'date', 'fullName', 'email', 'phone', 'usAddress',
+  'ssn', 'ein', 'checkbox', 'number', 'dollar', 'integer', 'percent',
+  'imageFile', 'signature', 'initial', 'signatureDate',
+])
 
-  // Skip an optional header row
-  if (cells.length > 0 && /^(fieldalias|alias)$/i.test(cells[0])) {
-    cells.shift()
+/**
+ * Parses one CSV line into its cells, honoring double-quoted fields (which may
+ * themselves contain commas and escaped `""` quotes). Cells are trimmed.
+ */
+function parseCSVLine(line: string): string[] {
+  const cells: string[] = []
+  let cur = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          cur += '"' // escaped quote
+          i++
+        } else {
+          inQuotes = false
+        }
+      } else {
+        cur += ch
+      }
+    } else if (ch === '"') {
+      inQuotes = true
+    } else if (ch === ',') {
+      cells.push(cur)
+      cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  cells.push(cur)
+
+  return cells.map((c) => c.trim())
+}
+
+/**
+ * Maps a CSV header cell (lower-cased) to the FieldAlias property it fills.
+ * Several spellings are accepted so column headers don't have to be exact.
+ */
+const HEADER_TO_KEY: Record<string, keyof FieldAlias> = {
+  fieldalias: 'id', alias: 'id', aliasid: 'id', id: 'id',
+  fieldname: 'name', name: 'name', label: 'name',
+  fieldtype: 'type', type: 'type',
+  fielddescription: 'description', description: 'description', desc: 'description',
+}
+
+/**
+ * Reads field aliases from a CSV whose columns are `fieldAlias`, `fieldName`,
+ * `fieldType`, and `fieldDescription` in ANY order. Behavior:
+ *   - columns are matched by header name (case-insensitive, see HEADER_TO_KEY),
+ *     so column order in the file does not matter
+ *   - `fieldAlias` is the alias id (aliasId) — required; rows without one are
+ *     skipped, and the file must have a fieldAlias column
+ *   - `fieldName` is an optional human-readable display label
+ *   - `fieldType` is an optional Anvil field type; unrecognized types are
+ *     dropped with a warning
+ *   - `fieldDescription` is an optional description Document AI uses to match
+ *     the field on the PDF
+ *   - a file with no recognizable header falls back to positional order
+ *     (fieldAlias, fieldName, fieldType, fieldDescription)
+ *   - a leading UTF-8 BOM is stripped; rows are de-duplicated by alias id,
+ *     keeping the first occurrence
+ *
+ * Returns an array of FieldAlias objects in file order.
+ */
+function readAliasesFromCSV(csvPath: string): FieldAlias[] {
+  const raw = fs.readFileSync(csvPath, 'utf-8').replace(/^﻿/, '')
+  const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0)
+  if (lines.length === 0) return []
+
+  // Detect a header row and map each column to a FieldAlias key by name. A file
+  // with no recognizable header falls back to the documented positional order.
+  const headerCells = parseCSVLine(lines[0]).map((c) => c.toLowerCase())
+  const hasHeader = headerCells.some((c) => c in HEADER_TO_KEY)
+  const columns: Array<keyof FieldAlias | null> = hasHeader
+    ? headerCells.map((c) => HEADER_TO_KEY[c] ?? null)
+    : ['id', 'name', 'type', 'description']
+  const start = hasHeader ? 1 : 0
+
+  if (!columns.includes('id')) {
+    throw new Error(
+      `No fieldAlias column found in ${path.basename(csvPath)}. ` +
+        `Expected a header row containing a "fieldAlias" column.`
+    )
   }
 
-  // De-duplicate while preserving order
-  return Array.from(new Set(cells))
+  // Value of a given FieldAlias key for a parsed row, or '' if that column
+  // isn't present.
+  const cellFor = (cells: string[], key: keyof FieldAlias): string => {
+    const col = columns.indexOf(key)
+    return col === -1 ? '' : (cells[col] ?? '')
+  }
+
+  const seen = new Set<string>()
+  const aliases: FieldAlias[] = []
+
+  for (let i = start; i < lines.length; i++) {
+    const cells = parseCSVLine(lines[i])
+    const id = cellFor(cells, 'id')
+    if (!id) continue
+    if (seen.has(id)) continue
+    seen.add(id)
+
+    const name = cellFor(cells, 'name')
+    const rawType = cellFor(cells, 'type')
+    const description = cellFor(cells, 'description')
+
+    let type: string | undefined
+    if (rawType) {
+      if (VALID_FIELD_TYPES.has(rawType)) {
+        type = rawType
+      } else {
+        console.warn(
+          `  ⚠ Unknown fieldType "${rawType}" for alias "${id}" — ignoring type. ` +
+            `Valid types: ${Array.from(VALID_FIELD_TYPES).join(', ')}`
+        )
+      }
+    }
+
+    aliases.push({
+      id,
+      ...(name ? { name } : {}),
+      ...(type ? { type } : {}),
+      ...(description ? { description } : {}),
+    })
+  }
+
+  return aliases
+}
+
+/**
+ * Builds the `aliasIds` JSON object for createCast from the parsed aliases.
+ * Shape: `{ <aliasId>: { name?, type?, description? }, ... }` — the format
+ * Anvil's advancedDetectFields AI expects to auto-assign your field
+ * ids/labels/types. The object key is the fieldAlias (aliasId).
+ */
+function buildAliasIds(aliases: FieldAlias[]): Record<string, Record<string, string>> {
+  const out: Record<string, Record<string, string>> = {}
+  for (const a of aliases) {
+    const entry: Record<string, string> = {}
+    if (a.name) entry.name = a.name
+    if (a.type) entry.type = a.type
+    if (a.description) entry.description = a.description
+    out[a.id] = entry
+  }
+  return out
 }
 
 // ---------------------------------------------------------------------------
@@ -173,6 +341,7 @@ const CREATE_CAST_MUTATION = `
     $title: String
     $file: Upload!
     $aliasIds: JSON
+    $allowedAliasIds: [String]
     $detectBoxesAdvanced: Boolean
     $advancedDetectFields: Boolean
     $isTemplate: Boolean
@@ -181,6 +350,7 @@ const CREATE_CAST_MUTATION = `
       title: $title
       file: $file
       aliasIds: $aliasIds
+      allowedAliasIds: $allowedAliasIds
       detectBoxesAdvanced: $detectBoxesAdvanced
       advancedDetectFields: $advancedDetectFields
       isTemplate: $isTemplate
@@ -214,7 +384,7 @@ function documentAIUpgradeMessage(errors: any[]): string | null {
 async function uploadPDF(
   client: InstanceType<typeof Anvil>,
   filePath: string,
-  fieldAliases: string[]
+  fieldAliases: FieldAlias[]
 ): Promise<CastResult> {
   const filename = path.basename(filePath)
   const title = path.basename(filePath, '.pdf').replace(/[-_]/g, ' ')
@@ -232,10 +402,13 @@ async function uploadPDF(
       advancedDetectFields: true,
     }
 
-    // Pass the CSV aliases as aliasIds (a JSON array of strings) so Document AI
-    // can auto-assign your own field names to the fields it detects.
+    // Pass the CSV aliases as aliasIds (a JSON object keyed by alias id, each
+    // carrying an optional type/description) so Document AI can auto-assign your
+    // own field names/types to the fields it detects and use the descriptions
+    // to tag them. allowedAliasIds restricts the template to only these aliases.
     if (fieldAliases.length > 0) {
-      variables.aliasIds = fieldAliases
+      variables.aliasIds = buildAliasIds(fieldAliases)
+      variables.allowedAliasIds = fieldAliases.map((a) => a.id)
     }
 
     let response = await client.requestGraphQL({
@@ -264,7 +437,11 @@ async function uploadPDF(
           isTemplate: true,
           detectBoxesAdvanced: false,
           advancedDetectFields: false,
-          // aliasIds are only used together with advancedDetectFields
+          // aliasIds are only used together with advancedDetectFields, but
+          // allowedAliasIds still restricts which aliases the template permits.
+          ...(fieldAliases.length > 0
+            ? { allowedAliasIds: fieldAliases.map((a) => a.id) }
+            : {}),
         },
       })
       documentAI = 'fallback'
@@ -337,7 +514,7 @@ Usage: npx ts-node create-casts.ts [options]
 
 Options:
   --dir <path>       Directory containing PDF files (required)
-  --aliases <path>   CSV file listing field aliases, one per line (optional)
+  --aliases <path>   CSV: fieldAlias,fieldName,fieldType,fieldDescription (optional)
   --api-key <key>    Anvil API key (or set ANVIL_API_KEY env var)
   --concurrency <n>  Max parallel createCast calls (default: 4)
   --dry-run          List PDFs and aliases without uploading
@@ -378,12 +555,21 @@ Options:
   }
 
   // Read field aliases from CSV
-  let fieldAliases: string[] = []
+  let fieldAliases: FieldAlias[] = []
   if (config.aliasesPath) {
     try {
       fieldAliases = readAliasesFromCSV(config.aliasesPath)
       console.log(`\nField aliases read from CSV (${fieldAliases.length}):`)
-      fieldAliases.forEach((a) => console.log(`  - ${a}`))
+      fieldAliases.forEach((a) => {
+        const meta = [
+          a.name ? `name: ${a.name}` : null,
+          a.type ? `type: ${a.type}` : null,
+          a.description ? `"${a.description}"` : null,
+        ]
+          .filter(Boolean)
+          .join(', ')
+        console.log(`  - ${a.id}${meta ? ` (${meta})` : ''}`)
+      })
     } catch (err: any) {
       console.error(`Warning: Could not read aliases CSV: ${err?.message ?? err}`)
       console.log('Continuing without field aliases...\n')

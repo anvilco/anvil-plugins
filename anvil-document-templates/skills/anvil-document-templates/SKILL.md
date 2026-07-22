@@ -46,10 +46,12 @@ front, in one message, and make clear the second is optional:
 > **1. Where are the PDFs?** Give me the path to the directory containing the PDF templates to
 > upload. I'll scan that one directory (non-recursive) for `*.pdf` files.
 >
-> **2. Do you have a field aliases (data schema) CSV? (optional — you can skip this.)** This is a single-column
-> CSV of the field names you want the detected fields mapped to (the keys your integration code
-> later uses in `fillPDF` / Etch payloads). If you have one, give me the path. If not, just say
-> "skip" and I'll upload the PDFs with Document AI detection but no pre-named aliases.
+> **2. Do you have a field aliases (data schema) CSV? (optional — you can skip this.)** This is a
+> CSV with columns `fieldAlias,fieldName,fieldType,fieldDescription` (only `fieldAlias` is required;
+> the rest are optional and columns can be in any order). `fieldAlias` is the key your integration
+> code later uses in `fillPDF` / Etch payloads; `fieldName`, `fieldType`, and `fieldDescription`
+> help Document AI label, type, and match each field. If you have one, give me the path. If not,
+> just say "skip" and I'll upload the PDFs with Document AI detection but no pre-named aliases.
 
 Handle the answers:
 
@@ -61,8 +63,8 @@ Handle the answers:
     **"No problem — Document AI will still detect the fields, you'll just name them yourself in the
     editor afterward."**
   - If they have the field names in a schema (Prisma models, TypeScript interfaces, a JSON schema)
-    but not a CSV → offer to extract them into a single-column CSV for them (see Phase 2), rather
-    than making them skip.
+    but not a CSV → offer to extract them into a `fieldAlias,fieldName,fieldType,fieldDescription`
+    CSV for them (see Phase 2), rather than making them skip.
 
 Also flag one thing up front so it isn't a surprise later:
 
@@ -97,16 +99,25 @@ npm install -D ts-node typescript
 
 ### Field aliases (data schema) CSV (optional)
 
-If the developer has field names, put them in a single-column CSV, one alias per line. A header row
-of `fieldAlias` or `alias` is allowed and skipped automatically. Example:
+If the developer has field names, put them in a CSV with a header row. Columns are
+`fieldAlias,fieldName,fieldType,fieldDescription` and can appear in any order; only `fieldAlias`
+(the alias id) is required. `fieldName` is a human-readable label, `fieldType` is an Anvil field
+type (unrecognized types are dropped with a warning), and `fieldDescription` is text Document AI
+uses to match the field on the PDF. Example:
 
 ```csv
-fieldAlias
-firstName
-lastName
-email
-effectiveDate
+fieldAlias,fieldName,fieldType,fieldDescription
+firstName,First name,shortText,The signer's given name
+lastName,Last name,shortText,The signer's family name
+email,Email,email,Primary contact email address
+effectiveDate,Effective date,date,Date the agreement takes effect
 ```
+
+Valid `fieldType` values: `shortText`, `longText`, `date`, `fullName`, `email`, `phone`,
+`usAddress`, `ssn`, `ein`, `checkbox`, `number`, `dollar`, `integer`, `percent`, `imageFile`,
+`signature`, `initial`, `signatureDate`. A CSV with no recognizable header falls back to positional
+order (`fieldAlias`, `fieldName`, `fieldType`, `fieldDescription`), and rows are de-duplicated by
+alias id.
 
 ---
 
@@ -136,11 +147,13 @@ Copy the bundled script into the developer's project and run it.
 
 ### What the script does
 
-- Reads field aliases (data schema) from the single-column CSV (dedupes, skips a header row).
+- Reads field aliases (data schema) from the CSV (matches columns by header, validates field types,
+  dedupes by alias id).
 - Scans `--dir` for PDF files (non-recursive, sorted).
 - Looks up the organization from the API key to build template edit URLs.
 - Uploads each PDF via the `createCast` GraphQL mutation with `isTemplate: true` and Document AI
-  enabled (`detectBoxesAdvanced` + `advancedDetectFields`), passing the CSV aliases as `aliasIds`.
+  enabled (`detectBoxesAdvanced` + `advancedDetectFields`), passing the CSV aliases as the `aliasIds`
+  object and their ids as `allowedAliasIds` (restricting the template to only those aliases).
 - If (and only if) the org's plan lacks Document AI (`RequiresUpgradeError`), retries that file with
   standard detection and marks it as a fallback — other errors are reported as-is, never masked.
 - Runs uploads through a bounded worker pool (`--concurrency`, default 4) to respect rate limits.
@@ -152,7 +165,7 @@ Copy the bundled script into the developer's project and run it.
 | Flag | Purpose |
 | --- | --- |
 | `--dir <path>` | Directory of PDFs (required) |
-| `--aliases <path>` | Single-column CSV of field aliases (data schema) (optional) |
+| `--aliases <path>` | CSV of field aliases: `fieldAlias,fieldName,fieldType,fieldDescription` (optional) |
 | `--api-key <key>` | Anvil API key (else `ANVIL_API_KEY`) |
 | `--concurrency <n>` | Max parallel `createCast` calls (default 4) |
 | `--dry-run` | List PDFs and aliases without uploading |
