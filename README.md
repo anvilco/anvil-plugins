@@ -8,6 +8,7 @@ Plugins that help developers integrate [Anvil's](https://www.useanvil.com) docum
 |--------|-------------|
 | **[anvil-document-sdk](./anvil-document-sdk)** | Implement Anvil API integrations — PDF Filling, HTML-to-PDF Generation, Etch E-Sign, and Workflows — into any existing Node.js or TypeScript codebase. |
 | **[dropbox-anvil-migration](./dropbox-anvil-migration)** | Migrate existing DropboxSign/HelloSign e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, migrates templates, rewrites code, and verifies the migration. |
+| **[anvil-document-templates](./anvil-document-templates)** | Create and manage Anvil document templates (Casts) at scale. Bulk-uploads a folder of PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review. |
 
 ## Installation
 
@@ -104,6 +105,22 @@ The skill includes:
 - Bundled template download script (standalone, no external deps)
 - Template migration guide with database migration generation
 - References the `anvil-document-sdk` skill for Anvil implementation patterns
+
+### anvil-document-templates
+
+A guided skill that walks developers through creating and managing Anvil document templates (Casts) at scale:
+
+- **Bulk Template Creation** — Turns a folder of PDFs into Anvil templates via the `createCast` mutation
+- **Document AI Field Detection** — Auto-detects form fields on each PDF (`detectBoxesAdvanced` + `advancedDetectFields`)
+- **Field Aliases (data schema)** — Applies your own field names, types, and descriptions from a CSV so detected fields map to your data model
+- **Graceful Fallback** — Retries with standard detection when a plan lacks Document AI, without masking unrelated errors
+- **Manifest + Review** — Writes a filename → `castEid` manifest and opens each new template in edit mode for review
+
+The skill includes:
+
+- A four-phase guided flow: understand the source templates, set up the environment, create the templates, then review and publish
+- Bundled `scripts/create-casts.ts` for bulk-uploading a directory of PDFs with Document AI field detection and CSV-driven field aliases
+- References the `anvil-document-sdk` skill for wiring published `castEid`s into integration code
 
 ## Contributing
 
