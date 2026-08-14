@@ -49,6 +49,7 @@ walks them through six phases:
 
 ### Reference Files
 
+- `references/terminology.md` — PandaDoc → Anvil vocabulary map (glossary)
 - `references/api-mapping.md` — Complete PandaDoc → Anvil API mapping with
   before/after code, plus how to list/read Anvil templates
 - `references/feature-parity.md` — Feature gaps and workarounds

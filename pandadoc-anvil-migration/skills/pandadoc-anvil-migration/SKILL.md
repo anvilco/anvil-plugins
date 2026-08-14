@@ -30,6 +30,42 @@ focuses on the PandaDoc-specific discovery, mapping, and migration steps.
 
 ---
 
+## Before you start: offer a migration overview
+
+When the developer is **first** starting the migration — before discovery — ask:
+**"Want a quick overview of how a PandaDoc → Anvil migration works — the terminology
+differences and how the API calls line up?"**
+
+If yes, share the two-paragraph summary below (keep it to these two paragraphs —
+don't expand it). Write to a technical reader who's comfortable with code. If they'd
+rather dive in, skip to Phase 1.
+
+> **Terminology.** Your PandaDoc *document* is an Anvil *Etch packet*
+> (`createEtchPacket` → `etchPacketEid`); a *template* is a *Cast* (`castEid`) or a
+> *dynamic doc*; a *role* is an Anvil *signer* with an arbitrary `id`; *fields* are
+> signer-assigned *field aliases*; and — the one that trips people up — *tokens*
+> (`{{merge}}` variables) become *fill data* (`data.payloads`), **not** signer
+> fields. `send silent:false/true` maps to `signerType: 'email'`/`'embedded'`, and a
+> *signing session* becomes `generateEtchSignURL`. One `@anvilco/anvil` client with a
+> single `ANVIL_API_KEY` replaces the `API-Key` SDK.
+>
+> **API sequencing.** PandaDoc's create → poll → send is asynchronous: `POST /documents`
+> (`template_uuid`), poll until `document.draft`, then `POST /send`, then a `/session`
+> for embedded signing. Anvil collapses all of that into one **synchronous**
+> `createEtchPacket` (files by `castEid`, each signer carrying its own `fields[]`,
+> plus `data.payloads` for fields *and* former tokens; `isTest: true` while
+> developing) — **drop the poll loop** — then `generateEtchSignURL` for embedded
+> signers, `createWebhookAction` for `signerComplete`/`etchPacketComplete` (PandaDoc's
+> `recipient_completed` / `document_state_changed`→`document.completed`), and
+> `downloadDocuments` on completion. Templates have no flat-PDF export, so each one
+> migrates to either a structure-preserving **dynamic doc** or a rendered **PDF +
+> Document AI**, chosen per template.
+
+For the full vocabulary, see `references/terminology.md`; for the full API mapping
+with before/after code, `references/api-mapping.md`.
+
+---
+
 ## Phase 1: Discovery
 
 Before making changes, scan the codebase for every PandaDoc integration point.
@@ -142,7 +178,8 @@ Once discovery is confirmed, map their integration to Anvil.
 
 ### Load the mapping reference
 
-Read `references/api-mapping.md` for the complete PandaDoc → Anvil mapping (client
+Read `references/terminology.md` for the vocabulary map (PandaDoc term → Anvil
+term), then `references/api-mapping.md` for the complete PandaDoc → Anvil mapping (client
 init, the roles/fields/tokens model, document create → `createEtchPacket`, embedded
 sessions, webhooks, templates, auth, downloads, and how to list/read Anvil
 templates).

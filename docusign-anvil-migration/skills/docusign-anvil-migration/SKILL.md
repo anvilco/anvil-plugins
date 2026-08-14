@@ -29,6 +29,43 @@ focuses on the DocuSign-specific discovery, mapping, and migration steps.
 
 ---
 
+## Before you start: offer a migration overview
+
+When the developer is **first** starting the migration — before discovery — ask:
+**"Want a quick overview of how a DocuSign → Anvil migration works — the terminology
+differences and how the API calls line up?"**
+
+If yes, share the two-paragraph summary below (keep it to these two paragraphs —
+don't expand it). Write to a technical reader who's comfortable with code. If they'd
+rather dive in, skip to Phase 1.
+
+> **Terminology.** Your DocuSign *envelope* is an Anvil *Etch packet*
+> (`createEtchPacket` → `etchPacketEid`); a *template* is a *Cast* (`castEid`); a
+> template *role* (`roleName`) is an Anvil *signer* with an arbitrary `id`; *tabs*
+> (`signHere`, `text`, …) become typed *fields* whose `tabLabel`/`tabId` map to Anvil
+> `aliasId`s; tab `value`/`prefillTabs` become a `data.payloads` prefill; and a
+> captive recipient (`clientUserId`) becomes an embedded signer
+> (`signerType: 'embedded'`). One `@anvilco/anvil` client replaces
+> `EnvelopesApi`/`TemplatesApi` and the JWT + `accountId`/`base_uri` handshake — a
+> single `ANVIL_API_KEY`, no impersonation or account discovery.
+>
+> **API sequencing.** Where you call `createEnvelope` (`status: "sent"`, `templateId`,
+> `templateRoles[].tabs`), then `createRecipientView` for captive signers, wait on
+> Connect `eventNotification`s, then pull `documents/combined` +
+> `documents/certificate` — Anvil collapses that to one `createEtchPacket` (files by
+> `castEid`, each signer carrying its own `fields[]`, plus `data.payloads`;
+> `isTest: true` while developing), then `generateEtchSignURL` + `AnvilEmbedFrame`
+> for embedded signers, `createWebhookAction` for
+> `signerComplete`/`etchPacketComplete`, and `downloadDocuments` (signed PDFs +
+> certificate in one zip) on completion. Templates migrate **losslessly** via Anvil's
+> DocuSign-JSON converter (export → `createCast` as `application/json`), preserving
+> field geometry, types, and signer roles.
+
+For the full vocabulary, see `references/terminology.md`; for the full API mapping
+with before/after code, `references/api-mapping.md`.
+
+---
+
 ## Phase 1: Discovery
 
 Before making changes, scan the codebase for every DocuSign integration point.
@@ -162,7 +199,8 @@ Once discovery is confirmed, map their integration to Anvil.
 
 ### Load the mapping reference
 
-Read `references/api-mapping.md` for the complete DocuSign → Anvil mapping
+Read `references/terminology.md` for the vocabulary map (DocuSign term → Anvil
+term), then `references/api-mapping.md` for the complete DocuSign → Anvil mapping
 (client init, envelope → `createEtchPacket`, embedded signing, webhooks,
 templates, tabs, auth, downloads, and how to list/read Anvil templates).
 
