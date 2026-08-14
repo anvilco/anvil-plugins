@@ -149,6 +149,7 @@ and no separate send call. Drop the poll loop entirely.
 | `tokens[]` (merge vars) | `data.payloads.{fileId}.data` | Also fill data — not signer fields |
 | send `silent: false` | `signerType: 'email'` | Anvil emails signers |
 | send `silent: true` | `signerType: 'embedded'` | You host the signing UI |
+| `metadata` / `tags` | Store in your own DB | Anvil has no metadata bag on packets |
 | create → poll → send | single `createEtchPacket` call | Anvil sends synchronously |
 
 ---

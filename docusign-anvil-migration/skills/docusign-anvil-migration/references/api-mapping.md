@@ -160,6 +160,7 @@ const etchPacketEid = data?.data?.createEtchPacket?.eid
 | `templateRoles[].clientUserId` | `signers[].signerType: 'embedded'` | See embedded signing below |
 | `carbonCopies[]` | `signers[]` with no signature fields, or app-level notification | See feature-parity.md |
 | `recipients.signers[].accessCode` | Signer auth (app-level) | See feature-parity.md |
+| `customFields` (envelope) | Store in your own DB | Anvil has no metadata bag on packets |
 | `eventNotification` | `createWebhookAction` | See webhooks below |
 | N/A | `replyToName` / `replyToEmail` | Customize the reply-to on signing emails |
 

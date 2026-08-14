@@ -184,6 +184,70 @@ against your plan) with a development API key.
 
 ---
 
+## Bulk Send → Loop with Rate Limiting
+
+**PandaDoc:** Create many documents from one template programmatically; the API
+enforces per-endpoint rate limits (HTTP 429 when exceeded).
+
+**Anvil:** No dedicated bulk-send API.
+
+**Workaround:** Loop over `createEtchPacket`. Production keys support 40
+requests/second; the Anvil Node client handles rate limiting and retries
+automatically, so a straightforward loop is safe.
+
+```typescript
+for (const r of recipients) {
+  await anvilClient.createEtchPacket({ variables: { /* per-recipient packet */ } })
+}
+```
+
+**Impact:** Medium — a loop instead of a batch, but rate limiting is handled for you.
+
+---
+
+## Document Metadata → Your Own Database
+
+**PandaDoc:** `metadata` (and `tags`) on a document carry arbitrary key/values that
+travel with the document and come back on webhooks.
+
+**Anvil:** Etch packets have **no metadata bag**.
+
+**Workaround:** Store the metadata in your own database keyed by `etchPacketEid`.
+You already receive the packet EID on webhooks, so join to your own record there.
+
+**Impact:** Low — a small storage change; you likely track this data already.
+
+---
+
+## Signer Verification (SMS / Passcode) → Custom Auth Wall
+
+**PandaDoc:** Recipient `verification_settings` (SMS or passcode) gate a signer
+before they can open the document.
+
+**Anvil:** No built-in signer verification of these kinds.
+
+**Workaround:** Gate access before generating the Anvil sign URL — verify a
+passcode or SMS/OTP via your existing provider, or reuse your app's MFA. For
+embedded signing, tie sessions to authenticated users via `clientUserId`.
+
+**Impact:** Medium-High — build an auth flow if verification is compliance-critical.
+
+---
+
+## White Labeling → Anvil CSS Themes
+
+**PandaDoc:** Branding via workspace settings (logo, colors).
+
+**Anvil:** CSS-based theming of the signing UI — more control than PandaDoc's
+branding.
+
+**Workaround:** Create a CSS theme (see https://github.com/anvilco/anvil-themes)
+and configure it in the Anvil dashboard under API settings > white labeling.
+
+**Impact:** Low — more powerful, but requires a CSS file.
+
+---
+
 ## OAuth Multi-Tenant → Separate Orgs or API Keys
 
 **PandaDoc:** OAuth2 lets your app act on behalf of other PandaDoc accounts.
@@ -212,5 +276,9 @@ against your plan) with a development API key.
 | Embedded session | Direct (`AnvilEmbedFrame`) | None |
 | Completion webhooks | `etchPacketComplete` | Low |
 | File collection | Signer attachment / app flow | Low-Medium |
+| Bulk send | Loop with rate limiting | Medium |
+| Document metadata | Store in your own DB | Low |
+| Signer verification (SMS/passcode) | Custom auth wall | Medium-High |
+| White labeling | CSS themes (more powerful) | Low |
 | Sandbox vs prod key | `isTest` | None |
 | OAuth multi-tenant | Separate orgs / keys | High |
