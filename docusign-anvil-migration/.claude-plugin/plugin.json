@@ -1,0 +1,19 @@
+{
+  "name": "docusign-anvil-migration",
+  "version": "1.0.0",
+  "description": "Migrate existing DocuSign eSignature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, converts DocuSign templates to Anvil templates (preserving field geometry, types, and signer roles), rewrites code, and verifies the migration end-to-end.",
+  "author": {
+    "name": "Anvil"
+  },
+  "homepage": "https://www.useanvil.com",
+  "keywords": [
+    "docusign",
+    "esignature",
+    "migration",
+    "anvil",
+    "etch",
+    "esign",
+    "e-signature",
+    "document-automation"
+  ]
+}
