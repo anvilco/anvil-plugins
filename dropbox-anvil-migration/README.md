@@ -25,6 +25,7 @@ When a developer mentions migrating from DropboxSign or HelloSign to Anvil, the 
 
 ### Reference Files
 
+- `references/terminology.md` — DropboxSign → Anvil vocabulary map (glossary)
 - `references/api-mapping.md` — Complete DropboxSign → Anvil API mapping with before/after code
 - `references/feature-parity.md` — Feature gaps and workarounds
 - `references/template-migration.md` — Step-by-step template migration guide

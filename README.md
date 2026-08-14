@@ -8,6 +8,8 @@ Plugins that help developers integrate [Anvil's](https://www.useanvil.com) docum
 |--------|-------------|
 | **[anvil-document-sdk](./anvil-document-sdk)** | Implement Anvil API integrations — PDF Filling, HTML-to-PDF Generation, Etch E-Sign, and Workflows — into any existing Node.js or TypeScript codebase. |
 | **[dropbox-anvil-migration](./dropbox-anvil-migration)** | Migrate existing DropboxSign/HelloSign e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, migrates templates, rewrites code, and verifies the migration. |
+| **[docusign-anvil-migration](./docusign-anvil-migration)** | Migrate existing DocuSign eSignature integrations to Anvil Etch E-Sign. Converts DocuSign templates directly to Anvil templates (preserving field geometry, types, and signer roles), then maps APIs, rewrites code, and verifies the migration. |
+| **[pandadoc-anvil-migration](./pandadoc-anvil-migration)** | Migrate existing PandaDoc e-signature integrations to Anvil Etch E-Sign. Maps PandaDoc's roles/fields/tokens model to Anvil, migrates templates via PDF rendering and Document AI, rewrites code, and verifies the migration. |
 | **[anvil-document-templates](./anvil-document-templates)** | Create and manage Anvil document templates (Casts) at scale. Bulk-uploads a folder of PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review. |
 
 ## Installation
@@ -104,6 +106,40 @@ The skill includes:
 - Feature parity analysis with workarounds for each gap
 - Bundled template download script (standalone, no external deps)
 - Template migration guide with database migration generation
+- References the `anvil-document-sdk` skill for Anvil implementation patterns
+
+### docusign-anvil-migration
+
+A guided migration skill that walks developers through replacing DocuSign eSignature integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for all DocuSign SDK usage (`docusign-esign`), API calls, env vars, Connect webhooks, and database references
+- **Template Conversion** — Converts DocuSign templates **directly** into Anvil templates via Anvil's DocuSign-JSON converter, preserving field geometry, field types, and signer roles — no manual re-tagging
+- **API Mapping** — Maps envelopes, `templateRoles`, tabs, recipient views, and Connect events to Anvil equivalents
+- **Code Rewriting** — Replaces the SDK, rewrites embedded signing (`createRecipientView` → `generateEtchSignURL`) and webhook handlers, updates env vars and DB schema
+- **Verification** — Guides end-to-end testing and cleanup
+
+The skill includes:
+
+- Complete API mapping reference (DocuSign → Anvil), including how to list/read Anvil templates
+- Feature parity analysis with workarounds for each gap
+- Two bundled scripts: `export-docusign-templates.ts` (templates → converter JSON) and `import-docusign-json.ts` (JSON → Anvil `castEid`s)
+- References the `anvil-document-sdk` skill for Anvil implementation patterns
+
+### pandadoc-anvil-migration
+
+A guided migration skill that walks developers through replacing PandaDoc integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for all PandaDoc SDK usage, API calls, env vars, webhook subscriptions, and database references
+- **API Mapping** — Maps PandaDoc's roles/fields/tokens model, async document create + send, signing sessions, and webhooks to Anvil equivalents
+- **Template Migration** — PandaDoc has no flat-PDF export, so templates are migrated by rendering a base PDF and re-detecting fields with Anvil Document AI, with field geometry captured where available (tiered strategy)
+- **Code Rewriting** — Replaces the SDK, collapses the create→poll→send flow into a single `createEtchPacket`, rewrites embedded signing and webhook handlers, updates env vars and DB schema
+- **Verification** — Guides end-to-end testing and cleanup
+
+The skill includes:
+
+- Complete API mapping reference (PandaDoc → Anvil), including how to list/read Anvil templates
+- Feature parity analysis with workarounds for each gap
+- Bundled `export-pandadoc-templates.ts` script (template structure + rendered PDF + field geometry)
 - References the `anvil-document-sdk` skill for Anvil implementation patterns
 
 ### anvil-document-templates

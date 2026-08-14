@@ -21,6 +21,22 @@
       }
     },
     {
+      "name": "docusign-anvil-migration",
+      "source": "./docusign-anvil-migration",
+      "description": "Migrate existing DocuSign eSignature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, converts DocuSign templates directly to Anvil templates (preserving field geometry, types, and signer roles), rewrites code, and verifies the migration end-to-end.",
+      "author": {
+        "name": "Anvil"
+      }
+    },
+    {
+      "name": "pandadoc-anvil-migration",
+      "source": "./pandadoc-anvil-migration",
+      "description": "Migrate existing PandaDoc e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs (roles, fields, tokens), migrates templates via PDF rendering and Anvil Document AI, rewrites code, and verifies the migration end-to-end.",
+      "author": {
+        "name": "Anvil"
+      }
+    },
+    {
       "name": "anvil-document-templates",
       "source": "./anvil-document-templates",
       "description": "Create and manage Anvil document templates (Casts) at scale. Bulk-uploads PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review.",

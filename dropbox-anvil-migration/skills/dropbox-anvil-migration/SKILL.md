@@ -16,6 +16,40 @@ You are helping a developer migrate their existing DropboxSign (formerly HelloSi
 
 ---
 
+## Before you start: offer a migration overview
+
+When the developer is **first** starting the migration — before discovery — ask:
+**"Want a quick overview of how a DropboxSign → Anvil migration works — the
+terminology differences and how the API calls line up?"**
+
+If yes, share the two-paragraph summary below (keep it to these two paragraphs —
+don't expand it). Write to a technical reader who's comfortable with code. If they'd
+rather dive in, skip to Phase 1.
+
+> **Terminology.** Your DropboxSign *signature request* is an Anvil *Etch packet*
+> (`createEtchPacket` → `etchPacketEid`); a *template* is a *Cast* (`castEid`); a
+> template *role* is an Anvil *signer* with an arbitrary `id`; *merge/custom fields*
+> become *field aliases* filled by a `data` payload; and *embedded signing* (your
+> `client_id` + `getSignUrl`) becomes an embedded signer (`signerType: 'embedded'`)
+> plus `generateEtchSignURL`. One `@anvilco/anvil` client replaces the split
+> `SignatureRequestApi`/`TemplateApi`/`EmbeddedApi` classes, and a single
+> `ANVIL_API_KEY` replaces the API-key-plus-`client_id` pair.
+>
+> **API sequencing.** Where you call `signatureRequestSendWithTemplate` (or
+> `...CreateEmbeddedWithTemplate` then `getSignUrl`), wait on event callbacks, then
+> `signatureRequest.files` to download — Anvil collapses that to one
+> `createEtchPacket` (files by `castEid`, each signer carrying its own `fields[]`,
+> plus a `data.payloads` prefill; `isTest: true` while developing), then
+> `generateEtchSignURL` for embedded signers, `createWebhookAction` to receive
+> `signerComplete`/`etchPacketComplete`, and `downloadDocuments` (signed PDFs +
+> certificate in one zip) on completion. Templates migrate by downloading each
+> template's PDF and re-tagging fields in Anvil (Document AI assists).
+
+For the full vocabulary, see `references/terminology.md`; for the full API mapping
+with before/after code, `references/api-mapping.md`.
+
+---
+
 ## Phase 1: Discovery
 
 Before making any changes, scan the developer's codebase to find every DropboxSign/HelloSign integration point. Run these searches and present a complete findings summary before proceeding.
@@ -139,7 +173,7 @@ Once the developer confirms the discovery is complete, map their existing integr
 
 ### Load the mapping reference
 
-Read `references/api-mapping.md` for the complete DropboxSign → Anvil API mapping. This covers SDK calls, client initialization, signature request fields, embedded signing, webhooks, templates, and authentication.
+Read `references/terminology.md` for the vocabulary map (DropboxSign term → Anvil term), then `references/api-mapping.md` for the complete DropboxSign → Anvil API mapping. This covers SDK calls, client initialization, signature request fields, embedded signing, webhooks, templates, and authentication.
 
 ### Surface feature parity gaps
 
