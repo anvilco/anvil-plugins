@@ -1,13 +1,14 @@
-# Xodo Sign (eversign) → Anvil Terminology
+# Apryse Xodo Sign (eversign) → Anvil Terminology
 
-A vocabulary map from Xodo Sign — the product formerly (and still, at the API
+A vocabulary map from Apryse Xodo Sign — the product formerly (and still, at the API
 level) called **eversign** — to Anvil. Use it to keep names straight while reading
 the rest of the references. The full API mapping with before/after code is in
 `api-mapping.md`; feature gaps are in `feature-parity.md`; template conversion is in
 `template-migration.md`.
 
-**Heritage:** "Xodo Sign" and "eversign" are the same platform. The REST API is
-`api.eversign.com`, the SDK/package is `eversign`, and auth is still
+**Heritage:** "Apryse Xodo Sign", "Xodo Sign", and "eversign" are the same
+platform — eversign was rebranded Xodo Sign and is now part of Apryse. The REST API
+is `api.eversign.com`, the SDK/package is `eversign`, and auth is still
 `access_key` + `business_id`. Every eversign term below is what a current
 integration actually uses.
 

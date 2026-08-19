@@ -1,7 +1,9 @@
-# Xodo Sign → Anvil Migration Plugin
+# Apryse Xodo Sign → Anvil Migration Plugin
 
-A Claude plugin that guides developers through migrating existing Xodo Sign
-(formerly **eversign**) e-signature integrations to Anvil Etch E-Sign.
+A Claude plugin that guides developers through migrating existing **Apryse Xodo
+Sign** (formerly **eversign**) e-signature integrations to Anvil Etch E-Sign. Xodo
+Sign is now part of Apryse; the product began life as eversign, and its REST API
+(`api.eversign.com`) still uses the eversign name.
 
 ## Capabilities
 

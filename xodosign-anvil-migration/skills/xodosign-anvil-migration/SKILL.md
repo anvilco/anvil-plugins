@@ -1,9 +1,10 @@
 ---
 name: xodosign-anvil-migration
 description: >
-  Migrate existing Xodo Sign (formerly eversign) e-signature integrations to Anvil
-  Etch E-Sign. Use this skill when a developer mentions migrating from Xodo Sign,
-  eversign, the eversign REST API or `eversign` SDK, an access_key + business_id,
+  Migrate existing Apryse Xodo Sign (formerly eversign) e-signature integrations to
+  Anvil Etch E-Sign. Use this skill when a developer mentions migrating from Apryse
+  Xodo Sign, Xodo Sign, Apryse, eversign, the eversign REST API or `eversign` SDK,
+  an access_key + business_id,
   documents/templates with signers/roles/positioned fields, document_hash, embedded
   signing (embedded_signing_url), or eversign webhook events (document_signed,
   document_completed, document_declined). Also trigger when someone mentions
@@ -12,18 +13,19 @@ description: >
   to Anvil.
 ---
 
-# Xodo Sign (eversign) → Anvil Etch E-Sign Migration Skill
+# Apryse Xodo Sign (eversign) → Anvil Etch E-Sign Migration Skill
 
-You are helping a developer migrate their existing Xodo Sign e-signature
+You are helping a developer migrate their existing Apryse Xodo Sign e-signature
 integration to Anvil Etch E-Sign, preserving all existing functionality. Your job
 is to discover what they have, map it to Anvil equivalents, migrate their templates,
 rewrite code, and verify everything works.
 
-**Xodo Sign is eversign.** "Xodo Sign" is the current brand for the product formerly
-called **eversign**. The API is still hosted at `api.eversign.com`, the npm package
-is still `eversign`, and integrations still authenticate with `access_key` +
-`business_id`. Treat the two names as the same platform — the developer's code runs
-against the eversign API regardless of which name they use.
+**Apryse Xodo Sign is eversign.** The product was originally **eversign**, was
+rebranded **Xodo Sign**, and is now part of **Apryse** (marketed as "Apryse Xodo
+Sign"). All three names refer to the same platform: the API is still hosted at
+`api.eversign.com`, the npm package is still `eversign`, and integrations still
+authenticate with `access_key` + `business_id`. Treat the names interchangeably —
+the developer's code runs against the eversign API regardless of which they use.
 
 **Important:** For all Anvil implementation patterns (client setup, Etch packets,
 embedded signing, webhooks, PDF filling, downloads), reference the

@@ -1,6 +1,6 @@
-# Xodo Sign (eversign) Template Migration Reference
+# Apryse Xodo Sign (eversign) Template Migration Reference
 
-How to migrate Xodo Sign / eversign templates into Anvil. eversign templates are
+How to migrate Apryse Xodo Sign / eversign templates into Anvil. eversign templates are
 **flat PDFs with positioned fields** (each field has a pixel `x`/`y`, a `page`, and
 a `type`), plus optional **merge fields** for prefill. That maps directly onto an
 Anvil PDF template (Cast), so the default path is **PDF + Document AI** — the same

@@ -1,7 +1,7 @@
 {
   "name": "xodosign-anvil-migration",
   "version": "1.0.0",
-  "description": "Migrate existing Xodo Sign (formerly eversign) e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs (documents, signers, positioned fields, template merge fields, webhook events), migrates flat-PDF templates via Anvil Document AI, rewrites code, and verifies the migration end-to-end.",
+  "description": "Migrate existing Apryse Xodo Sign (formerly eversign) e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs (documents, signers, positioned fields, template merge fields, webhook events), migrates flat-PDF templates via Anvil Document AI, rewrites code, and verifies the migration end-to-end.",
   "author": {
     "name": "Anvil"
   },
@@ -9,6 +9,8 @@
   "keywords": [
     "xodosign",
     "xodo-sign",
+    "apryse",
+    "apryse-xodo-sign",
     "eversign",
     "esignature",
     "migration",

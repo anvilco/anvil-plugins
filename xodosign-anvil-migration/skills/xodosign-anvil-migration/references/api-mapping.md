@@ -1,6 +1,6 @@
-# Xodo Sign (eversign) → Anvil API Mapping Reference
+# Apryse Xodo Sign (eversign) → Anvil API Mapping Reference
 
-This document maps the Xodo Sign / **eversign** REST API to its Anvil Etch E-Sign
+This document maps the Apryse Xodo Sign / **eversign** REST API to its Anvil Etch E-Sign
 equivalents. Use it when rewriting integration code. For Anvil implementation
 patterns (client setup, Etch packets, embedded signing, webhooks, downloads),
 reference the `anvil-document-sdk` skill rather than reimplementing them here.

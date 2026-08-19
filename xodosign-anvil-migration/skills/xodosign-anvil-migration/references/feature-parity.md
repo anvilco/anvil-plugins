@@ -1,6 +1,7 @@
-# Xodo Sign (eversign) → Anvil Feature Parity Reference
+# Apryse Xodo Sign (eversign) → Anvil Feature Parity Reference
 
-eversign features that don't map 1:1 to Anvil, with recommended workarounds. When
+Apryse Xodo Sign / eversign features that don't map 1:1 to Anvil, with recommended
+workarounds. When
 migrating, **always surface the relevant gaps to the developer** — never silently
 drop a feature.
 
