@@ -10,6 +10,10 @@ Plugins that help developers integrate [Anvil's](https://www.useanvil.com) docum
 | **[dropbox-anvil-migration](./dropbox-anvil-migration)** | Migrate existing DropboxSign/HelloSign e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, migrates templates, rewrites code, and verifies the migration. |
 | **[docusign-anvil-migration](./docusign-anvil-migration)** | Migrate existing DocuSign eSignature integrations to Anvil Etch E-Sign. Converts DocuSign templates directly to Anvil templates (preserving field geometry, types, and signer roles), then maps APIs, rewrites code, and verifies the migration. |
 | **[pandadoc-anvil-migration](./pandadoc-anvil-migration)** | Migrate existing PandaDoc e-signature integrations to Anvil Etch E-Sign. Maps PandaDoc's roles/fields/tokens model to Anvil, migrates templates via PDF rendering and Document AI, rewrites code, and verifies the migration. |
+| **[xodosign-anvil-migration](./xodosign-anvil-migration)** | Migrate existing Xodo Sign (formerly eversign) e-signature integrations to Anvil Etch E-Sign. Maps documents/signers/positioned fields to Anvil, migrates flat-PDF templates via Document AI, rewrites code, and verifies the migration. |
+| **[adobesign-anvil-migration](./adobesign-anvil-migration)** | Migrate existing Adobe Acrobat Sign (eSign REST API v6) integrations to Anvil Etch E-Sign. Maps the OAuth + shard base-URI model and participant sets to Anvil, migrates templates via PDF + Document AI (with a dynamic-doc option), rewrites code, and verifies the migration. |
+| **[signnow-anvil-migration](./signnow-anvil-migration)** | Migrate existing signNow (airSlate SignNow) e-signature integrations to Anvil Etch E-Sign. Maps documents/roles/positioned fields and role-based invites to Anvil, migrates templates via PDF download + Document AI, rewrites code, and verifies the migration. |
+| **[boldsign-anvil-migration](./boldsign-anvil-migration)** | Migrate existing BoldSign e-signature integrations to Anvil Etch E-Sign. Maps documents/templates/roles/positioned form fields and embedded signing to Anvil, migrates templates via PDF download + Document AI, rewrites code, and verifies the migration. |
 | **[anvil-document-templates](./anvil-document-templates)** | Create and manage Anvil document templates (Casts) at scale. Bulk-uploads a folder of PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review. |
 
 ## Installation
@@ -141,6 +145,54 @@ The skill includes:
 - Feature parity analysis with workarounds for each gap
 - Bundled `export-pandadoc-templates.ts` script (template structure + rendered PDF + field geometry)
 - References the `anvil-document-sdk` skill for Anvil implementation patterns
+
+### xodosign-anvil-migration
+
+A guided migration skill that walks developers through replacing Xodo Sign (formerly eversign) integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for eversign/Xodo Sign SDK usage, API calls (`access_key`/`business_id`), env vars, webhook events, and database references
+- **API Mapping** — Maps documents, signers/roles, positioned fields, template merge fields, embedded signing, and webhook events to Anvil equivalents
+- **Template Migration** — Flat-PDF templates migrate via PDF download + Anvil Document AI field detection, then field re-tagging
+- **Code Rewriting** — Replaces the SDK, rewrites embedded signing and webhook handlers, updates env vars and DB schema
+- **Verification** — Guides end-to-end testing and cleanup
+
+The skill includes a terminology glossary, complete API mapping, feature-parity analysis, and a bundled `export-xodosign-templates.ts` script; it references the `anvil-document-sdk` skill for Anvil implementation patterns.
+
+### adobesign-anvil-migration
+
+A guided migration skill that walks developers through replacing Adobe Acrobat Sign (eSign REST API v6) integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for Adobe Sign SDK/REST usage, OAuth + Integration Key config, base-URI discovery, webhook handlers, and database references
+- **API Mapping** — Maps the OAuth + shard base-URI model to Anvil's single API key, and agreements/participant sets/transient & library documents/form fields to Anvil equivalents
+- **Template Migration** — Library documents migrate via PDF + Anvil Document AI, with a dynamic-doc option for content-heavy agreements
+- **Code Rewriting** — Replaces the client, rewrites embedded signing (`signingUrls` → `generateEtchSignURL`) and webhook handlers, updates env vars and DB schema
+- **Verification** — Guides end-to-end testing and cleanup
+
+The skill includes a terminology glossary, complete API mapping, feature-parity analysis, and a bundled `export-adobesign-templates.ts` script; it references the `anvil-document-sdk` skill for Anvil implementation patterns.
+
+### signnow-anvil-migration
+
+A guided migration skill that walks developers through replacing signNow (airSlate SignNow) integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for signNow SDK/REST usage, OAuth config, role-based invites, event subscriptions, and database references
+- **API Mapping** — Maps documents/templates, roles, positioned field elements, invites (with signing order), embedded invites, and event subscriptions to Anvil equivalents
+- **Template Migration** — Flat-PDF templates migrate via PDF download + Anvil Document AI field detection, then field re-tagging
+- **Code Rewriting** — Replaces the client, rewrites embedded signing and webhook handlers, updates env vars and DB schema
+- **Verification** — Guides end-to-end testing and cleanup
+
+The skill includes a terminology glossary, complete API mapping, feature-parity analysis, and a bundled `export-signnow-templates.ts` script; it references the `anvil-document-sdk` skill for Anvil implementation patterns.
+
+### boldsign-anvil-migration
+
+A guided migration skill that walks developers through replacing BoldSign integrations with Anvil Etch E-Sign:
+
+- **Discovery** — Scans for BoldSign SDK/REST usage (`X-API-KEY`), region hosts, webhook handlers, and database references
+- **API Mapping** — Maps documents/templates, roles, positioned form fields, embedded send/sign links, and webhook events to Anvil equivalents
+- **Template Migration** — Flat-PDF templates migrate via PDF download + Anvil Document AI field detection, then field re-tagging
+- **Code Rewriting** — Replaces the client, rewrites embedded signing and webhook handlers, updates env vars and DB schema
+- **Verification** — Guides end-to-end testing and cleanup
+
+The skill includes a terminology glossary, complete API mapping, feature-parity analysis, and a bundled `export-boldsign-templates.ts` script; it references the `anvil-document-sdk` skill for Anvil implementation patterns.
 
 ### anvil-document-templates
 

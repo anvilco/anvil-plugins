@@ -37,6 +37,38 @@
       }
     },
     {
+      "name": "xodosign-anvil-migration",
+      "source": "./xodosign-anvil-migration",
+      "description": "Migrate existing Xodo Sign (formerly eversign) e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs (documents, signers, positioned fields, template merge fields, webhook events), migrates flat-PDF templates via Anvil Document AI, rewrites code, and verifies the migration end-to-end.",
+      "author": {
+        "name": "Anvil"
+      }
+    },
+    {
+      "name": "adobesign-anvil-migration",
+      "source": "./adobesign-anvil-migration",
+      "description": "Migrate existing Adobe Acrobat Sign (Adobe Sign / eSign REST API v6) integrations to Anvil Etch E-Sign. Discovers integration points, maps the OAuth + shard base-URI model to Anvil's single API key, converts library documents to Anvil templates (PDF + Document AI, with a dynamic-doc option), rewrites code, and verifies the migration end-to-end.",
+      "author": {
+        "name": "Anvil"
+      }
+    },
+    {
+      "name": "signnow-anvil-migration",
+      "source": "./signnow-anvil-migration",
+      "description": "Migrate existing signNow (airSlate SignNow) e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs, migrates templates via PDF download and Anvil Document AI, rewrites code, and verifies the migration end-to-end.",
+      "author": {
+        "name": "Anvil"
+      }
+    },
+    {
+      "name": "boldsign-anvil-migration",
+      "source": "./boldsign-anvil-migration",
+      "description": "Migrate existing BoldSign e-signature integrations to Anvil Etch E-Sign. Discovers integration points, maps APIs (documents, templates, roles, positioned form fields, embedded signing, webhooks), migrates templates via PDF download + Anvil Document AI, rewrites code, and verifies the migration end-to-end.",
+      "author": {
+        "name": "Anvil"
+      }
+    },
+    {
       "name": "anvil-document-templates",
       "source": "./anvil-document-templates",
       "description": "Create and manage Anvil document templates (Casts) at scale. Bulk-uploads PDFs as templates with Document AI field detection, applies field aliases from a CSV, and opens each new template in edit mode for review.",
