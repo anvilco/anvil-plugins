@@ -1,0 +1,21 @@
+{
+  "name": "adobesign-anvil-migration",
+  "version": "1.0.0",
+  "description": "Migrate existing Adobe Acrobat Sign (Adobe Sign / eSign REST API v6) integrations to Anvil Etch E-Sign. Discovers integration points, maps the OAuth + shard base-URI model to Anvil's single API key, converts library documents to Anvil templates (PDF + Document AI, with a dynamic-doc option), rewrites code, and verifies the migration end-to-end.",
+  "author": {
+    "name": "Anvil"
+  },
+  "homepage": "https://www.useanvil.com",
+  "keywords": [
+    "adobe-sign",
+    "acrobat-sign",
+    "echosign",
+    "esignature",
+    "migration",
+    "anvil",
+    "etch",
+    "esign",
+    "e-signature",
+    "document-automation"
+  ]
+}

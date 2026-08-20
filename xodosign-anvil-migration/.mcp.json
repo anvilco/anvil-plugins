@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "anvil": {
+      "type": "http",
+      "url": "https://mcp.useanvil.com"
+    }
+  }
+}
