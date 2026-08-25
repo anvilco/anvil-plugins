@@ -186,8 +186,8 @@ The skill includes a terminology glossary, complete API mapping, feature-parity 
 
 A guided migration skill that walks developers through replacing BoldSign integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for BoldSign SDK/REST usage (`X-API-KEY`), region hosts, webhook handlers, and database references
-- **API Mapping** — Maps documents/templates, roles, positioned form fields, embedded send/sign links, and webhook events to Anvil equivalents
+- **Discovery** — Scans for BoldSign SDK/REST usage (`X-API-KEY`), region hosts, OAuth/`onBehalfOf` multi-tenant usage, webhook handlers, and database references
+- **API Mapping** — Maps documents/templates, roles, positioned form fields, embedded send/sign links, and webhook events to Anvil equivalents, and maps BoldSign's on-behalf/multi-tenant model to Anvil OAuth apps or child organizations
 - **Template Migration** — Flat-PDF templates migrate via PDF download + Anvil Document AI field detection, then field re-tagging
 - **Code Rewriting** — Replaces the client, rewrites embedded signing and webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing and cleanup

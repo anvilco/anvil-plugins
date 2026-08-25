@@ -54,7 +54,9 @@ const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 ```
 
 A single long-lived API key. No region-specific host, no OAuth token exchange, no
-account discovery.
+account discovery. Multi-tenant integrations that used BoldSign's OAuth-on-behalf
+resolve a *per-tenant* credential instead — an Anvil OAuth token for the tenant's
+own organization, or that tenant's child-org API key. See `feature-parity.md`.
 
 ---
 
@@ -273,7 +275,7 @@ completion-lifecycle events have direct Anvil equivalents.
 | `Expired` | N/A (app-level expiration) | See feature-parity.md |
 | `Reassigned` | N/A | Not exposed |
 | `SenderIdentityVerified` | N/A | Not exposed |
-| `BehalfDocumentSigned` / `BehalfDocumentCompleted` | `signerComplete` / `etchPacketComplete` | On-behalf sends collapse to the same two events |
+| `BehalfDocumentSigned` / `BehalfDocumentCompleted` | `signerComplete` / `etchPacketComplete` | On-behalf sends emit the same two events, on the acting org's webhook |
 
 ### Before (BoldSign — dashboard webhook + HMAC verification)
 
@@ -471,10 +473,10 @@ rendered the PDF you expected.
 | BoldSign | Anvil | Notes |
 |----------|-------|-------|
 | `X-API-KEY` header | `ANVIL_API_KEY` (Bearer, via the client) | Single key for everything |
-| OAuth 2.0 Bearer (Client Credentials / Auth Code) | N/A | No OAuth handshake |
+| OAuth 2.0 Bearer (Client Credentials / Auth Code) | API key, or an Anvil OAuth app for multi-tenant | Single-tenant integrations just use the API key; see feature-parity.md for OAuth |
 | Region host (`api.boldsign.com` / `eu-api.boldsign.com`) | N/A | One global endpoint; the client handles it |
 | `X-BoldSign-Signature` (webhook HMAC secret) | Anvil webhook verification | See `anvil-document-sdk` webhook reference |
-| OAuth on behalf of other accounts (multi-tenant) | Separate orgs or API keys | See feature-parity.md |
+| OAuth on behalf of other accounts (multi-tenant) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 | Sandbox key / sandbox mode | `isTest: true` + development key | Watermarked, non-billed |
 
 ---
