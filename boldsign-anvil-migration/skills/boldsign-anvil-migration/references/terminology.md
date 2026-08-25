@@ -31,5 +31,9 @@ aliases, embedded signers, and webhook actions.
 | `Completed` event | `etchPacketComplete` | All signers done; documents downloadable. |
 | Download (`/document/download`) + `downloadAuditLog` | `downloadDocuments` | Signed PDF + audit-trail certificate (Anvil returns both in one zip). |
 | Sandbox mode (sandbox key) | `isTest` + dev key | Watermarked, non-billed test documents. |
-| `X-API-KEY` / OAuth Bearer token | `ANVIL_API_KEY` | Auth. One key; no OAuth handshake or account discovery. |
+| `X-API-KEY` / OAuth Bearer token | `ANVIL_API_KEY` | Auth. One key per organization; single-tenant integrations need no handshake. |
+| OAuth on-behalf (act as another account) | Anvil OAuth app | Tenants authorize your app against their own Anvil org; you get a scoped token. Enterprise feature. |
+| Tenant account | Child organization | A parent org can own unlimited child orgs, each with its own templates, theme, users, webhook, and API keys. Enterprise feature. |
+| `onBehalfOf` sender | Child org's API key, or `replyToName`/`replyToEmail` | Full isolation vs. sender identity only. |
+| `brandId` on a send | Child org's CSS theme | Anvil brands per organization, not per send. |
 | `labels` / metadata | Your own database | Anvil packets have no metadata bag. |

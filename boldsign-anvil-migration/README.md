@@ -28,6 +28,11 @@ Two BoldSign specifics the plugin handles explicitly:
 
 - **Regional hosts** — US is `api.boldsign.com`, EU is `eu-api.boldsign.com`. Anvil
   uses one global endpoint, so the region host drops out entirely.
+- **Multi-tenant / on-behalf sending** — BoldSign's OAuth-on-behalf and `onBehalfOf`
+  sends have real Anvil equivalents: an Anvil OAuth app (tenants authorize your app
+  against their own org) or a child organization per tenant (isolated templates,
+  branding, webhooks, and API keys under one parent). The plugin detects
+  multi-tenant usage in discovery and makes the choice an explicit decision.
 - **Dashboard-configured webhooks** — BoldSign webhooks are set up in the dashboard
   (account/app-scoped) and verified with an `X-BoldSign-Signature` HMAC. Anvil
   registers webhooks **programmatically** with `createWebhookAction`, so the HMAC

@@ -138,6 +138,27 @@ existingFormFields
 signerOrder
 ```
 
+### Search for multi-tenant / on-behalf usage
+
+BoldSign's OAuth-on-behalf and `onBehalfOf` sends mean the integration serves more
+than one account. Anvil supports this too, but the shape of the port depends on
+which pattern is in use, so find it in discovery — not in code migration:
+
+```
+onBehalfOf
+onBehalfOfEmail
+brandId
+oauth/token           (BoldSign token exchange)
+/v1/oauth
+refresh_token
+tenantId / accountId  (per-tenant BoldSign credentials in your DB or config)
+```
+
+Check whether the app stores per-tenant BoldSign tokens/keys, and whether webhook
+handlers branch on `BehalfDocumentSigned` / `BehalfDocumentCompleted`. If any of
+this is present, flag it for the Phase 2 architecture decision (OAuth app vs. child
+org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook handlers
 
 BoldSign webhooks are configured in the **dashboard** (not in the send call), so
@@ -184,6 +205,8 @@ Present a structured summary:
 5. **Webhook handlers** — the receiving route + events handled
 6. **Database references** — tables/columns storing BoldSign IDs
 7. **Templates used** — template IDs hardcoded or in config
+8. **Multi-tenancy** — whether the app sends on behalf of other accounts/tenants
+   (OAuth tokens per tenant, `onBehalfOf`, `brandId`, `BehalfDocument*` events)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -216,7 +239,10 @@ feature. Pay special attention to:
 Present the mapping summary:
 1. **Direct equivalents** — most things (send, signers, routing, embedded signing, fields)
 2. **Gaps with workarounds** — CC recipients, reminders/expiration, decline, revoke, bulk send, signer auth
-3. **Gaps needing decisions** — embedded sending (builder), OAuth multi-tenant / on-behalf
+3. **Gaps needing decisions** — embedded sending (builder), and multi-tenant /
+   on-behalf architecture (Anvil OAuth app vs. a child org per tenant vs. one org
+   with per-packet `replyTo` — supported, but the choice shapes credential storage
+   and webhook routing)
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -363,8 +389,13 @@ Map BoldSign events to Anvil webhook events:
 ### Update environment variables
 
 - Replace all `BOLDSIGN_*` vars with `ANVIL_API_KEY`
-- Remove OAuth vars (`BOLDSIGN_CLIENT_ID`, `BOLDSIGN_CLIENT_SECRET`), the region host
-  (`BOLDSIGN_BASE_URL` / `BOLDSIGN_REGION`), and the webhook secret
+- Remove the region host (`BOLDSIGN_BASE_URL` / `BOLDSIGN_REGION`) and the webhook
+  secret
+- OAuth vars (`BOLDSIGN_CLIENT_ID`, `BOLDSIGN_CLIENT_SECRET`): if OAuth was only an
+  auth mechanism for a single account, drop them. If it was used to act on behalf of
+  other accounts, replace them with the credentials for the multi-tenant path chosen
+  in Phase 2 — an Anvil OAuth app's client ID/secret, or per-tenant child-org API
+  keys (stored encrypted, looked up per tenant at send time)
 - Update `.env.example`
 
 ### Update database references
