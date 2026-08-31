@@ -6,9 +6,12 @@ SignNow) e-signature integrations to Anvil Etch E-Sign.
 ## Capabilities
 
 - **Codebase Discovery** — Scans for all signNow integration points (SDK usage, API
-  calls, OAuth env vars, event subscriptions, database references)
+  calls, OAuth env vars, multi-tenant/on-behalf usage, event subscriptions, database
+  references)
 - **API Mapping** — Maps signNow's two-step OAuth, template copy + prefill + field
-  invite flow, embedded invites, and event subscriptions to Anvil equivalents
+  invite flow, embedded invites, and event subscriptions to Anvil equivalents, and
+  maps signNow's authorization-code / per-user password grant to Anvil OAuth apps or
+  child organizations
 - **Template Migration** — Downloads templates from signNow as PDFs, uploads to
   Anvil with Document AI field detection, generates an ID mapping
 - **Code Rewriting** — Replaces the SDK, collapses the copy → prefill → invite
@@ -27,6 +30,12 @@ Two things shape a signNow → Anvil migration:
 - **Multi-call sends.** signNow copies a template into a document, prefills it, then
   sends a role-based field invite as separate API calls. Anvil collapses that into a
   single synchronous `createEtchPacket`.
+- **Multi-tenant / on-behalf sending.** signNow's authorization-code grant and its
+  per-user password grant both have real Anvil equivalents. An Anvil **OAuth app**
+  lets tenants authorize your app against their own organization, and **child
+  organizations** give each tenant an isolated org — own templates, branding,
+  webhook, and API keys — under one parent. The plugin detects multi-tenant usage in
+  discovery and makes the choice an explicit decision.
 
 signNow templates are **flat PDFs with positioned fields**, so they migrate via PDF
 download + Anvil's Document AI field detection. A dynamic-doc target is offered for

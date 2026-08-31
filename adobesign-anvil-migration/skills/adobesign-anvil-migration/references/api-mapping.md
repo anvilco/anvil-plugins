@@ -70,7 +70,10 @@ const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 ```
 
 A single long-lived API key on one fixed host. No token refresh, no `baseUris`
-discovery, no `x-api-user` impersonation.
+discovery, no `x-api-user` impersonation. Multi-tenant integrations that used
+Adobe's OAuth-on-behalf or `x-api-user` resolve a *per-tenant* credential instead —
+an Anvil OAuth token for the tenant's own organization, or that tenant's child-org
+API key. See `feature-parity.md`.
 
 ---
 
@@ -480,9 +483,9 @@ rendered the PDF you expected.
 | OAuth `access_token` / `refresh_token` | N/A | No token exchange or refresh |
 | Integration Key (Bearer) | `ANVIL_API_KEY` | Both Adobe modes collapse to one key |
 | `GET /baseUris` → `api_access_point` (shard host) | N/A | Single fixed host, no discovery |
-| `x-api-user` (sender impersonation) | N/A | Access control lives in your app |
+| `x-api-user` (sender impersonation) | N/A, or a child-org API key per tenant | Single-tenant access control lives in your app; multi-tenant maps to per-org credentials |
 | Webhook `X-AdobeSign-ClientId` verification | Anvil webhook verification | See `anvil-document-sdk` webhook reference |
-| OAuth on behalf of other accounts (multi-tenant) | Separate orgs or API keys | See feature-parity.md |
+| OAuth on behalf of other accounts (multi-tenant) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 
 Adobe scopes look like `agreement_write:self`, `library_read:self`,
 `webhook_write:self` (a `<resource>_<action>:<modifier>` shape). Anvil's single key

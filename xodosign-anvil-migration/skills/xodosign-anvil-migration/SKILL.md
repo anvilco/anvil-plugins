@@ -158,6 +158,26 @@ access_key=
 business_id=
 ```
 
+### Search for multi-tenant / multi-business usage
+
+A per-request `business_id`, or eversign's OAuth flow, means the integration serves
+more than one business or account. Anvil supports this too, but the shape of the port
+depends on which pattern is in use, so find it in discovery — not in code migration:
+
+```
+business_id
+eversign.com/oauth
+oauth/authorize
+refresh_token
+access_key              (per-tenant keys in your DB or config)
+tenantId / businessId
+```
+
+Check whether the app stores per-tenant `access_key`s or OAuth tokens, whether it
+selects a `business_id` per request, and whether one webhook handles events across
+businesses. If any of this is present, flag it for the Phase 2 architecture decision
+(OAuth app vs. child org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook handlers
 
 ```
@@ -204,6 +224,8 @@ Present a structured summary:
 5. **Webhook handlers** — routes + events handled
 6. **Database references** — tables/columns storing document hashes / template IDs
 7. **Templates used** — template IDs hardcoded or in config
+8. **Multi-tenancy** — whether the app serves multiple businesses or accounts
+   (per-request `business_id`, per-tenant `access_key`s, OAuth tokens)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -235,7 +257,9 @@ Present the mapping summary:
 1. **Direct equivalents** — send, signers, routing, embedded, fields, downloads
 2. **Gaps with workarounds** — CC recipients, decline, expiration/reminders, bulk
    send, signer auth, `meta`
-3. **Gaps needing decisions** — OAuth / multiple businesses
+3. **Gaps needing decisions** — multi-tenant / multi-business architecture (Anvil
+   OAuth app vs. a child org per tenant vs. one org with per-packet `replyTo` —
+   supported, but the choice shapes credential storage and webhook routing)
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -356,6 +380,11 @@ Replace the eversign `new Client(accessKey, businessId)` with a single
 `new Anvil({ apiKey })`. Drop the business selection (`fetchBusinesses` /
 `setSelectedBusinessById`). See `references/api-mapping.md`.
 
+If Phase 2 chose a multi-tenant path, the key is resolved **per tenant** rather than
+read from one env var — an Anvil OAuth token for the tenant's own organization, or
+that tenant's child-org API key looked up at send time. Construct the client per
+request instead of once at module load.
+
 ### Rewrite document creation
 
 Map each `createDocumentFromTemplate` (or `createDocument`) to `createEtchPacket`:
@@ -387,8 +416,13 @@ Map eversign events to Anvil webhook events:
 
 ### Update environment variables
 
-- Replace `EVERSIGN_*` / `XODOSIGN_*` vars (`access_key`, `business_id`, OAuth) with
+- Replace `EVERSIGN_*` / `XODOSIGN_*` vars (`access_key`, `business_id`) with
   `ANVIL_API_KEY`
+- OAuth vars (client id/secret, refresh tokens): if OAuth was only an auth mechanism
+  for a single account, drop them. If it was used to act on behalf of other accounts
+  or businesses, replace them with the credentials for the multi-tenant path chosen
+  in Phase 2 — an Anvil OAuth app's client ID/secret, or per-tenant child-org API
+  keys (stored encrypted, looked up per tenant at send time)
 - Update `.env.example`
 
 ### Update database references

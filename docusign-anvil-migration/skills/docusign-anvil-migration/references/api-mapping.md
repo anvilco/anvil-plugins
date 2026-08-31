@@ -59,7 +59,10 @@ const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 ```
 
 A single long-lived API key. No token refresh, no `accountId`/`base_uri`
-discovery, no impersonation.
+discovery, no impersonation. Multi-tenant integrations that used DocuSign's
+Authorization Code grant or SOBO resolve a *per-tenant* credential instead — an
+Anvil OAuth token for the tenant's own organization, or that tenant's child-org API
+key. See `feature-parity.md`.
 
 ---
 
@@ -468,11 +471,11 @@ rendered the PDF you expected.
 | DocuSign | Anvil | Notes |
 |----------|-------|-------|
 | `DOCUSIGN_INTEGRATION_KEY` (client ID) | `ANVIL_API_KEY` | Single key for everything |
-| `DOCUSIGN_USER_ID` (impersonated user GUID) | N/A | No impersonation |
+| `DOCUSIGN_USER_ID` (impersonated user GUID) | N/A, or a child-org API key per tenant | Single-tenant needs no impersonation; multi-tenant maps to per-org credentials |
 | `DOCUSIGN_PRIVATE_KEY` (JWT RSA key) | N/A | No JWT exchange |
-| `DOCUSIGN_ACCOUNT_ID` / `base_uri` (from `userinfo`) | N/A | No per-account discovery |
+| `DOCUSIGN_ACCOUNT_ID` / `base_uri` (from `userinfo`) | N/A — or the tenant's child org | No discovery call; in Option B the child org *is* the account |
 | `DOCUSIGN_HMAC_KEY` (Connect HMAC secret) | Anvil webhook verification | See `anvil-document-sdk` webhook reference |
-| OAuth Auth Code grant (multi-tenant) | Separate orgs or API keys | See feature-parity.md |
+| OAuth Auth Code grant (multi-tenant) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 
 ---
 

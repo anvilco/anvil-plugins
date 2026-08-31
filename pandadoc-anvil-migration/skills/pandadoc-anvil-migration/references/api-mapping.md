@@ -39,7 +39,10 @@ const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 
 A single client for all operations. Note PandaDoc's **sandbox vs production** split
 is by API key; Anvil uses `isTest: true` on individual packets instead of a
-separate key environment.
+separate key environment. Multi-tenant integrations that used PandaDoc's OAuth2 or
+per-workspace keys resolve a *per-tenant* credential instead — an Anvil OAuth token
+for the tenant's own organization, or that tenant's child-org API key. See
+`feature-parity.md`.
 
 ---
 
@@ -418,7 +421,7 @@ Either way, the PDF is never anonymously accessible.
 |----------|-------|-------|
 | `PANDADOC_API_KEY` (`API-Key` header) | `ANVIL_API_KEY` | Single key for everything |
 | Sandbox vs production key | `isTest: true` per packet | Anvil doesn't split by key environment |
-| OAuth2 (act on behalf of other accounts) | Separate orgs or API keys | See feature-parity.md |
+| OAuth2 (act on behalf of other accounts) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 | `PANDADOC_WEBHOOK_KEY` (`x-pd-signature`) | Anvil webhook verification | See `anvil-document-sdk` webhook reference |
 
 ---

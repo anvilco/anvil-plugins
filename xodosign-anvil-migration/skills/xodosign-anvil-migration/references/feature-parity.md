@@ -195,25 +195,63 @@ signing.
 
 ---
 
-## OAuth / Multiple Businesses → Separate Orgs or API Keys
+## OAuth / Multiple Businesses → Anvil OAuth Apps or Child Organizations
 
 **eversign:** One account can hold multiple **businesses** (selected per request via
-`business_id`), and OAuth lets your app act on behalf of other eversign accounts
-(multi-tenant SaaS).
+`business_id`), each with its own templates and branding, and OAuth lets your app act
+on behalf of other eversign accounts (multi-tenant SaaS).
 
-**Anvil:** No `business_id` and no OAuth-on-behalf. Each Anvil organization has its
-own API key.
+**Anvil:** Supported — Anvil is multi-tenant too. Two first-class paths cover
+on-behalf sending, plus a lightweight single-org option. Pick one deliberately; it
+determines credential storage and webhook routing.
 
-**Workaround:**
-1. **Single org with template separation** — one Anvil account; track which
-   templates/tenants own what in your database.
-2. **Separate orgs per business/tenant** — each gets its own Anvil org and API key
-   (stored encrypted), for full isolation. This is the natural landing spot for
-   each eversign `business_id`.
-3. **Anvil reseller/white-label program** — contact Anvil for multi-tenant SaaS use
-   cases.
+**Option A — OAuth apps (your tenants own their Anvil accounts).** Register an
+OAuth app on your Anvil organization (`createOAuthApp` / Organization Settings →
+OAuth apps) with an `appName` and `redirectUri`; you get a `clientId` and
+`clientSecret`. Other Anvil organizations authorize your app through the redirect
+flow, and you receive a scoped token that acts against *their* organization. This is
+the closest analogue to eversign's OAuth-on-behalf: you never hold a tenant's
+`access_key`, and either side can revoke access (`revokeOAuthApp`). OAuth is an
+Enterprise feature — confirm it is enabled on your org and get the current
+authorize/token endpoints and scope list from Anvil before you build against it.
 
-**Impact:** High — an architectural decision. Discuss with the developer first.
+**Option B — child organizations (you provision tenants yourself).** An Anvil org
+can be the parent of an unlimited number of child organizations. Each child is a
+real, isolated org: its own templates, branding/theme, users, webhook, and its own
+development and production API keys — while billing and administration roll up to
+the parent. Create children in the dashboard, or via the API with
+`createOrganization(name, slug, parentEid)`, then mint that child's key with
+`addOrganizationAPIKey`. Store the per-child key encrypted and select it per tenant
+at send time. This is the natural landing spot for each eversign **business**: where
+you passed a `business_id` per request, you now select that child org's API key —
+and unlike a business, the child org has its own webhook and keys.
+Child organizations are an Enterprise feature — confirm enablement with Anvil.
+
+**Option C — one org, `replyTo` per packet.** If tenants only need to *appear* as
+the sender (not to own data), stay in a single org and set `replyToName` /
+`replyToEmail` on each `createEtchPacket`. This is the cheapest path but gives no
+data isolation — every tenant's packets and templates live in the same org.
+
+### Mapping
+
+| eversign | Anvil |
+|----------|-------|
+| OAuth; app acts for another eversign account | OAuth app → scoped token against that org (Option A) |
+| Business (`business_id` per request) | Child organization + that child's API key (Option B) |
+| Per-tenant `access_key`s stored in your DB | Per-tenant child-org API keys, stored encrypted (Option B) |
+| Business branding (logo, colors) | The child org's own CSS theme (see White Labeling) |
+| One webhook across businesses | Each org (child or OAuth-authorized) carries its own webhook |
+| Per-business template libraries | Templates live in each child org (B), or one org with tenant-tagged templates (C) |
+| Sender identity only, no isolation needed | `replyToName` / `replyToEmail` per packet (Option C) |
+
+**Ask the developer:** do your tenants already have — or want — their own Anvil
+accounts (→ OAuth apps), or does your product provision and own each tenant's
+workspace (→ child organizations)? Do tenants need isolated templates and data, or
+only a distinct sender identity (→ `replyTo` in a single org)?
+
+**Impact:** Medium — a real architectural choice, but there is genuine parity here.
+Decide before writing send code, since the credential lookup and webhook routing
+differ per option.
 
 ---
 
@@ -226,7 +264,10 @@ redirect URLs.
 branding.
 
 **Workaround:** Create a CSS theme (see https://github.com/anvilco/anvil-themes) and
-configure it in the Anvil dashboard under API settings > white labeling.
+configure it in the Anvil dashboard under API settings > white labeling. For
+multi-tenant apps, per-tenant branding lives on each tenant's own organization — a
+child org (or the tenant's own OAuth-authorized org) carries its own theme, so one
+brand per org replaces one branded business per tenant.
 
 **Impact:** Low — more powerful, but requires a CSS file.
 
@@ -297,7 +338,7 @@ document format). Signatures can't live inside a repeating row.
 | Cancel / void | App-level / packet void | Low |
 | Bulk send | Loop with rate limiting | Medium |
 | Signer auth (PIN / SMS) | Custom auth wall | Medium-High |
-| OAuth / multiple businesses | Separate orgs / keys | High |
+| OAuth / multiple businesses | OAuth apps or child orgs | Medium |
 | White labeling | CSS themes (more powerful) | Low |
 | Document `meta` | Your own database | Low-Medium |
 | Require all signers | Implicit in Anvil | Low |

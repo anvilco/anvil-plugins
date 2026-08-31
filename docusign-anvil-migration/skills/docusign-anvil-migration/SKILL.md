@@ -143,6 +143,28 @@ createRecipient
 bulkSend
 ```
 
+### Search for multi-tenant / on-behalf usage
+
+An Authorization Code grant, JWT `impersonation`, or SOBO means the integration
+serves more than one DocuSign account. Anvil supports this too, but the shape of the
+port depends on which pattern is in use, so find it in discovery — not in code
+migration:
+
+```
+X-DocuSign-Act-As-User
+X-DocuSign-Act-On-Behalf-Of
+impersonation           (JWT scope)
+/oauth/userinfo         (account discovery → per-tenant accountId)
+refresh_token
+brandId
+tenantId / accountId    (per-tenant DocuSign credentials in your DB or config)
+```
+
+Check whether the app stores per-tenant DocuSign tokens or account IDs, whether it
+picks an `accountId`/`base_uri` per request, and whether one Connect listener fans
+out across accounts. If any of this is present, flag it for the Phase 2 architecture
+decision (OAuth app vs. child org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook handlers (DocuSign Connect)
 
 ```
@@ -188,6 +210,9 @@ Present a structured summary:
 5. **Webhook handlers** — Connect routes + events handled
 6. **Database references** — tables/columns storing DocuSign IDs
 7. **Templates used** — template IDs hardcoded or in config
+8. **Multi-tenancy** — whether the app sends on behalf of other accounts/tenants
+   (per-tenant OAuth tokens, JWT `impersonation`, per-request `accountId`, SOBO,
+   `brandId`)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -214,7 +239,10 @@ Present the mapping summary:
 1. **Direct equivalents** — most things (send, signers, routing, embedded, fields)
 2. **Gaps with workarounds** — CC recipients, reminders/expiration, decline, bulk
    send, signer auth
-3. **Gaps needing decisions** — agents/editors, OAuth multi-tenant
+3. **Gaps needing decisions** — agents/editors, and multi-tenant / on-behalf
+   architecture (Anvil OAuth app vs. a child org per tenant vs. one org with
+   per-packet `replyTo` — supported, but the choice shapes credential storage and
+   webhook routing)
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -332,6 +360,11 @@ points. Reference the `anvil-document-sdk` skill for Anvil patterns.
 Replace the DocuSign `ApiClient` + JWT/token exchange + account discovery with a
 single `new Anvil({ apiKey })`. See `references/api-mapping.md`.
 
+If Phase 2 chose a multi-tenant path, the key is resolved **per tenant** rather than
+read from one env var — an Anvil OAuth token for the tenant's own organization, or
+that tenant's child-org API key looked up at send time. Construct the client per
+request instead of once at module load.
+
 ### Rewrite envelope creation
 
 Map each `createEnvelope` (with `templateId` + `templateRoles`) to
@@ -363,6 +396,11 @@ Map DocuSign Connect events to Anvil webhook events:
 - Replace all `DOCUSIGN_*` vars with `ANVIL_API_KEY`
 - Remove JWT/account-discovery vars (`DOCUSIGN_USER_ID`, `DOCUSIGN_PRIVATE_KEY`,
   `DOCUSIGN_ACCOUNT_ID`, `DOCUSIGN_BASE_URI`, HMAC key)
+- OAuth vars (`DOCUSIGN_CLIENT_ID`, `DOCUSIGN_CLIENT_SECRET`): if OAuth was only an
+  auth mechanism for a single account, drop them. If it was used to act on behalf of
+  other accounts, replace them with the credentials for the multi-tenant path chosen
+  in Phase 2 — an Anvil OAuth app's client ID/secret, or per-tenant child-org API
+  keys (stored encrypted, looked up per tenant at send time)
 - Update `.env.example`
 
 ### Update database references

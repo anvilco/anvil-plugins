@@ -6,9 +6,11 @@ integrations to Anvil Etch E-Sign.
 ## Capabilities
 
 - **Codebase Discovery** — Scans for all PandaDoc integration points (SDK usage,
-  API calls, env vars, webhook subscriptions, database references)
+  API calls, env vars, OAuth2/workspace multi-tenant usage, webhook subscriptions,
+  database references)
 - **API Mapping** — Maps PandaDoc's roles/fields/tokens model, async document
-  create + send, signing sessions, and webhooks to Anvil equivalents
+  create + send, signing sessions, and webhooks to Anvil equivalents, and maps
+  PandaDoc's OAuth2/workspace model to Anvil OAuth apps or child organizations
 - **Template Migration** — Migrates block/content-based templates to Anvil, with a
   tiered choice between a structure-preserving dynamic doc and a simpler PDF +
   Document AI pass
@@ -31,6 +33,14 @@ flat-PDF export for a template. The plugin handles this with two migration targe
   detect fields. Uses only the stable public API; best for simple/fixed layouts.
 
 The plugin recommends a target per template and explains the tradeoffs.
+
+A third PandaDoc specific the plugin handles explicitly: **OAuth2 and workspaces.**
+PandaDoc's OAuth2 on-behalf flow and its per-workspace template/branding split both
+have real Anvil equivalents. An Anvil **OAuth app** lets tenants authorize your app
+against their own organization, and a **child organization** is a stronger version of
+a workspace — an isolated org with its own templates, branding, webhook, and API keys
+under one parent. The plugin detects multi-tenant usage in discovery and makes the
+choice an explicit decision.
 
 ## How It Works
 

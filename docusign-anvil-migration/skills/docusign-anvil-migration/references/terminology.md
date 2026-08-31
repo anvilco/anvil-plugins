@@ -32,5 +32,9 @@ and webhook actions.
 | Documents `combined` / `certificate` | `downloadDocuments` | Signed PDFs + signing certificate (one zip). |
 | `status: "sent"` / `"created"` | send (default) / `isDraft: true` | Send immediately vs save as a draft. |
 | Demo vs production account | `isTest` + dev key | Watermarked test packets vs live. |
-| Integration key + JWT + `accountId`/`base_uri` | `ANVIL_API_KEY` | Auth. One key; no impersonation or account discovery. |
+| Integration key + JWT + `accountId`/`base_uri` | `ANVIL_API_KEY` | Auth. One key per organization; single-tenant integrations need no impersonation or account discovery. |
+| Auth Code grant (act as another account) | Anvil OAuth app | Tenants authorize your app against their own Anvil org; you get a scoped token. Enterprise feature. |
+| Account under your integration (per-tenant `accountId`) | Child organization | A parent org can own unlimited child orgs, each with its own templates, theme, users, webhook, and API keys. Enterprise feature. |
+| SOBO (`X-DocuSign-Act-As-User`) | Child org's API key, or `replyToName`/`replyToEmail` | Full isolation vs. sender identity only. |
+| `brandId` on an envelope | Child org's CSS theme | Anvil brands per organization, not per envelope. |
 | `customFields` | Your own database | Anvil packets have no metadata bag. |

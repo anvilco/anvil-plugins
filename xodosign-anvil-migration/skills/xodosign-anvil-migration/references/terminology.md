@@ -38,6 +38,10 @@ become Anvil signer IDs, field aliases, embedded signers, and webhook actions.
 | `download_final_document` (+ `audit_trail`) / `download_raw_document` | `downloadDocuments` | Signed PDFs + signing certificate (one zip). |
 | `is_draft` | `isDraft` | Save as a draft vs. send immediately. |
 | `sandbox` | `isTest` + dev key | Watermarked, non-billed test documents. |
-| `access_key` + `business_id` | `ANVIL_API_KEY` | Auth. One key; no business selection. |
+| `access_key` + `business_id` | `ANVIL_API_KEY` | Auth. One key per organization; single-tenant integrations need no business selection. |
+| OAuth on-behalf (act as another account) | Anvil OAuth app | Tenants authorize your app against their own Anvil org; you get a scoped token. Enterprise feature. |
+| Business / tenant account | Child organization | A parent org can own unlimited child orgs, each with its own templates, theme, users, webhook, and API keys. Enterprise feature. |
+| Sending as another business | Child org's API key, or `replyToName`/`replyToEmail` | Full isolation vs. sender identity only. |
+| Business branding | Child org's CSS theme | Anvil brands per organization, not per business. |
 | Signer `pin` / SMS authentication | Signer auth (app-level) | Extra verification before signing. |
 | `meta` | Your own database | Anvil packets have no metadata bag. |

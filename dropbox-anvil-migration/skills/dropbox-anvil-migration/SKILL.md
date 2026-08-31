@@ -113,6 +113,23 @@ signatureRequestCancel
 signatureRequestFiles
 ```
 
+### Search for multi-tenant / OAuth usage
+
+An API App plus the OAuth flow means the integration serves more than one Dropbox Sign account. Anvil supports this too, but the shape of the port depends on which pattern is in use, so find it in discovery — not in code migration:
+
+```
+oauth/token
+oauth/authorize
+HELLOSIGN_CLIENT_SECRET
+DROPBOX_SIGN_CLIENT_SECRET
+refresh_token
+account_id
+white_labeling_options
+tenantId / accountId    (per-tenant DropboxSign credentials in your DB or config)
+```
+
+Check whether the app stores per-tenant DropboxSign tokens or keys, whether it selects an `account_id` per request, and whether one `callback_url` handles events for many accounts. If any of this is present, flag it for the Phase 2 architecture decision (OAuth app vs. child org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook handlers
 
 Look for routes or handlers that process DropboxSign webhook events:
@@ -162,6 +179,7 @@ After completing all searches, present a structured summary to the developer:
 5. **Webhook Handlers:** Routes that process DropboxSign events, with the events they handle
 6. **Database References:** Tables/columns that store DropboxSign IDs
 7. **Templates Used:** Template IDs found hardcoded or in config files
+8. **Multi-tenancy:** Whether the app sends on behalf of other accounts/tenants (per-tenant OAuth tokens or API keys, an API App `client_id`/`client_secret`, per-request `account_id`)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -186,6 +204,8 @@ Present the full mapping summary:
 1. **Direct equivalents** — features that map cleanly (most of them)
 2. **Gaps with workarounds** — features that need adaptation
 3. **Gaps without workarounds** — features that don't have an Anvil equivalent (rare)
+
+If discovery found OAuth / multi-tenant usage, treat it as an architecture decision to make now, not a code-migration task: an Anvil OAuth app, a child org per tenant, or one org with per-packet `replyTo`. It is supported either way, but the choice shapes credential storage and webhook routing.
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -339,6 +359,8 @@ For all Anvil implementation patterns, **reference the `anvil-document-sdk` skil
 
 Read `references/api-mapping.md` for the side-by-side initialization code. Replace the DropboxSign client with the Anvil client.
 
+If Phase 2 chose a multi-tenant path, the key is resolved **per tenant** rather than read from one env var — an Anvil OAuth token for the tenant's own organization, or that tenant's child-org API key looked up at send time. Construct the client per request instead of once at module load.
+
 ### Rewrite signature request creation
 
 Map each `signatureRequestSendWithTemplate` or `signatureRequestCreateEmbeddedWithTemplate` call to `createEtchPacket`. Use the field mapping from `references/api-mapping.md`:
@@ -367,6 +389,7 @@ Register webhooks programmatically using `createWebhookAction` (see `anvil-docum
 
 - Replace `HELLOSIGN_API_KEY` / `DROPBOX_SIGN_API_KEY` references with `ANVIL_API_KEY`
 - Replace `HELLOSIGN_CLIENT_ID` / `DROPBOX_SIGN_CLIENT_ID` references (used for embedded signing) — Anvil uses the API key for everything
+- OAuth vars (`HELLOSIGN_CLIENT_SECRET` / `DROPBOX_SIGN_CLIENT_SECRET`): if the API App was only used for embedded signing on a single account, drop them. If it was used to act on behalf of other accounts, replace them with the credentials for the multi-tenant path chosen in Phase 2 — an Anvil OAuth app's client ID/secret, or per-tenant child-org API keys (stored encrypted, looked up per tenant at send time)
 - Update `.env.example` if it exists
 
 ### Update database schema references

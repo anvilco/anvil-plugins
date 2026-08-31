@@ -242,22 +242,73 @@ embedded signing, tie sessions to authenticated users via `clientUserId`.
 branding.
 
 **Workaround:** Create a CSS theme (see https://github.com/anvilco/anvil-themes)
-and configure it in the Anvil dashboard under API settings > white labeling.
+and configure it in the Anvil dashboard under API settings > white labeling. For
+multi-tenant apps, per-tenant branding lives on each tenant's own organization — a
+child org (or the tenant's own OAuth-authorized org) carries its own theme, so one
+brand per org replaces one branded workspace per tenant.
 
 **Impact:** Low — more powerful, but requires a CSS file.
 
 ---
 
-## OAuth Multi-Tenant → Separate Orgs or API Keys
+## OAuth Multi-Tenant / Workspaces → Anvil OAuth Apps or Child Organizations
 
-**PandaDoc:** OAuth2 lets your app act on behalf of other PandaDoc accounts.
+**PandaDoc:** OAuth2 (authorization code, `oauth2/access_token`) lets your app act on
+behalf of other PandaDoc accounts; workspaces partition templates, branding, and
+members inside one account; and the `sender` field on a document lets one account
+send as a particular team member.
 
-**Anvil:** No OAuth-on-behalf. Each org has its own API key.
+**Anvil:** Supported — Anvil is multi-tenant too. Two first-class paths cover
+on-behalf sending, plus a lightweight single-org option. Pick one deliberately; it
+determines credential storage and webhook routing.
 
-**Workaround:** Single org with template separation, or separate orgs per tenant
-(keys stored encrypted), or Anvil's reseller/white-label program.
+**Option A — OAuth apps (your tenants own their Anvil accounts).** Register an
+OAuth app on your Anvil organization (`createOAuthApp` / Organization Settings →
+OAuth apps) with an `appName` and `redirectUri`; you get a `clientId` and
+`clientSecret`. Other Anvil organizations authorize your app through the redirect
+flow, and you receive a scoped token that acts against *their* organization. This is
+the closest analogue to PandaDoc's OAuth2 authorization-code flow: you never hold a
+tenant's API key, and either side can revoke access (`revokeOAuthApp`). OAuth is an
+Enterprise feature — confirm it is enabled on your org and get the current
+authorize/token endpoints and scope list from Anvil before you build against it.
 
-**Impact:** High — an architectural decision. Discuss with the developer first.
+**Option B — child organizations (you provision tenants yourself).** An Anvil org
+can be the parent of an unlimited number of child organizations. Each child is a
+real, isolated org: its own templates, branding/theme, users, webhook, and its own
+development and production API keys — while billing and administration roll up to
+the parent. Create children in the dashboard, or via the API with
+`createOrganization(name, slug, parentEid)`, then mint that child's key with
+`addOrganizationAPIKey`. Store the per-child key encrypted and select it per tenant
+at send time. This is the closest analogue to a PandaDoc **workspace**, but stronger
+— a child org has its own API keys and webhook, not just its own template list.
+Child organizations are an Enterprise feature — confirm enablement with Anvil.
+
+**Option C — one org, `replyTo` per packet.** If tenants only need to *appear* as
+the sender (not to own data), stay in a single org and set `replyToName` /
+`replyToEmail` on each `createEtchPacket`. This is the closest match to PandaDoc's
+`sender` field, and the cheapest path — but it gives no data isolation, since every
+tenant's packets and templates live in the same org.
+
+### Mapping
+
+| PandaDoc | Anvil |
+|----------|-------|
+| OAuth2 auth-code; app acts for another account | OAuth app → scoped token against that org (Option A) |
+| Workspace (own templates, branding, members) | Child organization (Option B) — plus its own API keys and webhook |
+| Per-tenant API keys stored in your DB | Per-tenant child-org API keys, stored encrypted (Option B) |
+| `sender` on a document create | `replyToName` / `replyToEmail` per packet (Option C), or the child org's own key (B) |
+| Workspace branding (logo, colors) | The child org's own CSS theme (see White Labeling) |
+| One webhook subscription across workspaces | Each org (child or OAuth-authorized) carries its own webhook |
+| Per-tenant template libraries | Templates live in each child org (B), or one org with tenant-tagged templates (C) |
+
+**Ask the developer:** do your tenants already have — or want — their own Anvil
+accounts (→ OAuth apps), or does your product provision and own each tenant's
+workspace (→ child organizations)? Do tenants need isolated templates and data, or
+only a distinct sender identity (→ `replyTo` in a single org)?
+
+**Impact:** Medium — a real architectural choice, but there is genuine parity here.
+Decide before writing send code, since the credential lookup and webhook routing
+differ per option.
 
 ---
 
@@ -281,4 +332,4 @@ and configure it in the Anvil dashboard under API settings > white labeling.
 | Signer verification (SMS/passcode) | Custom auth wall | Medium-High |
 | White labeling | CSS themes (more powerful) | Low |
 | Sandbox vs prod key | `isTest` | None |
-| OAuth multi-tenant | Separate orgs / keys | High |
+| OAuth multi-tenant / workspaces | OAuth apps or child orgs | Medium |

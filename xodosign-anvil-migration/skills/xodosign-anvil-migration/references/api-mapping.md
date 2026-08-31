@@ -55,7 +55,10 @@ const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 ```
 
 A single long-lived API key. No `business_id`, no business selection, no OAuth
-handshake.
+handshake. Multi-tenant integrations that used eversign's OAuth-on-behalf or several
+businesses resolve a *per-tenant* credential instead — an Anvil OAuth token for the
+tenant's own organization, or that tenant's child-org API key. See
+`feature-parity.md`.
 
 ---
 
@@ -471,8 +474,8 @@ never anonymously accessible.
 | eversign | Anvil | Notes |
 |----------|-------|-------|
 | `access_key` (query param) | `ANVIL_API_KEY` | Single key for everything |
-| `business_id` (query param) | N/A | No business selection — one org per key |
-| OAuth `Bearer` token (multi-business) | Separate orgs or API keys | See feature-parity.md |
+| `business_id` (query param) | N/A — or a child org per business | One org per key; in multi-tenant setups the child org *is* the business |
+| OAuth `Bearer` token (multi-business) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 
 ---
 

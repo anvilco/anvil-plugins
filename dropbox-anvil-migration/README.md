@@ -4,11 +4,15 @@ A Claude plugin that guides developers through migrating existing DropboxSign (f
 
 ## Capabilities
 
-- **Codebase Discovery** — Scans for all DropboxSign/HelloSign integration points (SDK usage, API calls, env vars, webhooks, database references)
-- **API Mapping** — Maps DropboxSign API calls, fields, and events to Anvil equivalents
+- **Codebase Discovery** — Scans for all DropboxSign/HelloSign integration points (SDK usage, API calls, env vars, API App / OAuth multi-tenant usage, webhooks, database references)
+- **API Mapping** — Maps DropboxSign API calls, fields, and events to Anvil equivalents, and maps the API App + OAuth on-behalf model to Anvil OAuth apps or child organizations
 - **Template Migration** — Downloads templates from DropboxSign, uploads to Anvil, generates ID mapping
 - **Code Rewriting** — Replaces SDK calls, rewrites webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing of the migrated integration
+
+## Multi-tenant / OAuth integrations
+
+A DropboxSign API App plus the OAuth flow — acting on behalf of other accounts, with the app's `white_labeling_options` branding the signing UI — has a real Anvil equivalent. Anvil is multi-tenant too: an Anvil **OAuth app** lets tenants authorize your app against their own organization, and **child organizations** give each tenant an isolated org — own templates, branding, webhook, and API keys — under one parent. The plugin detects multi-tenant usage in discovery and makes the choice an explicit decision.
 
 ## How It Works
 

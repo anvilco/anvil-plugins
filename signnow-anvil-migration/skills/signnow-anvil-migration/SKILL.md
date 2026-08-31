@@ -133,6 +133,26 @@ document.download
 document.get
 ```
 
+### Search for multi-tenant / on-behalf usage
+
+An authorization-code grant, or a password grant run per user, means the integration
+serves more than one signNow account. Anvil supports this too, but the shape of the
+port depends on which pattern is in use, so find it in discovery — not in code
+migration:
+
+```
+grant_type=authorization_code
+oauth2/authorize
+refresh_token
+SIGNNOW_USERNAME / SIGNNOW_PASSWORD   (password grant, possibly per tenant)
+tenantId / accountId                  (per-tenant signNow credentials in your DB)
+```
+
+Check whether the app stores per-tenant signNow tokens or user credentials, whether
+it mints a token per tenant at send time, and whether one event subscription covers
+many accounts. If any of this is present, flag it for the Phase 2 architecture
+decision (OAuth app vs. child org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook / event-subscription handlers
 
 ```
@@ -176,6 +196,8 @@ Present a structured summary:
 5. **Webhook handlers** — event-subscription routes + events handled
 6. **Database references** — tables/columns storing signNow IDs
 7. **Templates used** — template IDs hardcoded or in config
+8. **Multi-tenancy** — whether the app sends on behalf of other accounts/tenants
+   (authorization-code grant, per-tenant tokens, a password grant run per user)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -207,7 +229,10 @@ Present the mapping summary:
 1. **Direct equivalents** — most things (send, signers, routing, embedded, fields)
 2. **Gaps with workarounds** — CC recipients, reminders/expiration, decline, bulk
    send, signer auth
-3. **Gaps needing decisions** — OAuth multi-tenant, per-signer webhook precision
+3. **Gaps needing decisions** — per-signer webhook precision, and multi-tenant /
+   on-behalf architecture (Anvil OAuth app vs. a child org per tenant vs. one org
+   with per-packet `replyTo` — supported, but the choice shapes credential storage
+   and webhook routing)
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -323,6 +348,11 @@ Replace the signNow two-step OAuth (Basic client credential → `POST /oauth2/to
 Bearer token, plus refresh handling) with a single `new Anvil({ apiKey })`. See
 `references/api-mapping.md`. **Delete the token-exchange and refresh logic.**
 
+If Phase 2 chose a multi-tenant path, the key is resolved **per tenant** rather than
+read from one env var — an Anvil OAuth token for the tenant's own organization, or
+that tenant's child-org API key looked up at send time. Construct the client per
+request instead of once at module load.
+
 ### Rewrite the send flow
 
 Collapse the signNow **copy → prefill → field invite** sequence into a single
@@ -355,6 +385,11 @@ Map signNow event subscriptions to Anvil webhook events:
 
 - Replace all `SIGNNOW_*` vars (client id/secret, tokens, username/password) with
   `ANVIL_API_KEY`
+- If OAuth was used to act on behalf of other accounts (not just as this account's
+  auth mechanism), the client id/secret are replaced rather than dropped — by the
+  credentials for the multi-tenant path chosen in Phase 2: an Anvil OAuth app's
+  client ID/secret, or per-tenant child-org API keys (stored encrypted, looked up
+  per tenant at send time)
 - Remove token-refresh / eval-host config
 - Replace eval-host usage with `isTest: true`
 - Update `.env.example`

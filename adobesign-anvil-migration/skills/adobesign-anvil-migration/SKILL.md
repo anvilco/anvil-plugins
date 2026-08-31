@@ -160,6 +160,27 @@ x-api-user                 (sender impersonation header)
 GET /baseUris
 ```
 
+### Search for multi-tenant / on-behalf usage
+
+An OAuth authorization-code grant or an `x-api-user` header means the integration
+serves more than one Adobe Sign account or user. Anvil supports this too, but the
+shape of the port depends on which pattern is in use, so find it in discovery — not
+in code migration:
+
+```
+x-api-user
+x-on-behalf-of-user
+/oauth/v2/authorize     (auth-code grant → per-tenant token)
+refresh_token
+groupId
+tenantId / accountId    (per-tenant Adobe Sign credentials in your DB or config)
+```
+
+Check whether the app stores per-tenant Adobe tokens or Integration Keys, whether it
+sets `x-api-user` per request, and whether one webhook client id covers many
+accounts. If any of this is present, flag it for the Phase 2 architecture decision
+(OAuth app vs. child org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook handlers
 
 ```
@@ -204,6 +225,8 @@ Present a structured summary:
 5. **Webhook handlers** — routes + events handled, and the client-id verification
 6. **Database references** — tables/columns storing Adobe Sign IDs
 7. **Templates used** — library document IDs hardcoded or in config
+8. **Multi-tenancy** — whether the app sends on behalf of other accounts/users
+   (per-tenant OAuth tokens or Integration Keys, `x-api-user`, `groupId`)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -240,7 +263,10 @@ Present the mapping summary:
    embedded signing, fields, prefill
 2. **Gaps with workarounds** — CC/approver roles, alternate members, reminders/
    expiration, bulk send, signer auth
-3. **Gaps needing decisions** — web forms, OAuth multi-tenant, `x-api-user` flows
+3. **Gaps needing decisions** — web forms, and multi-tenant / on-behalf
+   architecture (Anvil OAuth app vs. a child org per tenant vs. one org with
+   per-packet `replyTo` — supported, but the choice shapes credential storage and
+   webhook routing)
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -358,6 +384,11 @@ Replace the OAuth token exchange / Integration Key, the `GET /baseUris`
 (`api_access_point`) lookup, and any `x-api-user` header with a single
 `new Anvil({ apiKey })`. See `references/api-mapping.md`.
 
+If Phase 2 chose a multi-tenant path, the key is resolved **per tenant** rather than
+read from one env var — an Anvil OAuth token for the tenant's own organization, or
+that tenant's child-org API key looked up at send time. Construct the client per
+request instead of once at module load.
+
 ### Rewrite agreement creation
 
 Collapse the transient-upload → `POST /agreements` flow into one `createEtchPacket`:
@@ -386,8 +417,13 @@ Map Adobe Sign webhook events to Anvil webhook events:
 ### Update environment variables
 
 - Replace all `ADOBE_SIGN_*` / `ECHOSIGN_*` vars with `ANVIL_API_KEY`
-- Remove OAuth vars (`CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`), the Integration
-  Key, `BASE_URI`/`API_ACCESS_POINT`, `ACCOUNT_ID`, and webhook client-id vars
+- Remove the Integration Key, `BASE_URI`/`API_ACCESS_POINT`, `ACCOUNT_ID`, and
+  webhook client-id vars
+- OAuth vars (`CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`): if OAuth was only an
+  auth mechanism for a single account, drop them. If it was used to act on behalf of
+  other accounts, replace them with the credentials for the multi-tenant path chosen
+  in Phase 2 — an Anvil OAuth app's client ID/secret, or per-tenant child-org API
+  keys (stored encrypted, looked up per tenant at send time)
 - Update `.env.example`
 
 ### Update database references
