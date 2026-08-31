@@ -32,5 +32,9 @@ and embedded signers.
 | `signature_request_all_signed_and_complete` | `etchPacketComplete` | All signers done; documents downloadable. |
 | Files download (`signatureRequest.files`) | `downloadDocuments` | Retrieve signed PDFs. |
 | Completion certificate | Signing certificate | Audit trail; included in the download zip. |
-| API key + `client_id` | `ANVIL_API_KEY` | Auth. Anvil uses one key for everything — no separate client ID. |
+| API key + `client_id` | `ANVIL_API_KEY` | Auth. One key per organization — no separate client ID for embedded signing. |
+| API App + OAuth grant (act as another account) | Anvil OAuth app | Tenants authorize your app against their own Anvil org; you get a scoped token. Enterprise feature. |
+| Tenant account (`account_id`) | Child organization | A parent org can own unlimited child orgs, each with its own templates, theme, users, webhook, and API keys. Enterprise feature. |
+| Sending on behalf of another account | Child org's API key, or `replyToName`/`replyToEmail` | Full isolation vs. sender identity only. |
+| API App `white_labeling_options` | Child org's CSS theme | Anvil brands per organization, not per app. |
 | `metadata` | Your own database | Anvil packets have no metadata bag. |

@@ -6,9 +6,11 @@ eSignature integrations to Anvil Etch E-Sign.
 ## Capabilities
 
 - **Codebase Discovery** — Scans for all DocuSign integration points (SDK usage,
-  API calls, env vars, Connect webhooks, database references)
+  API calls, env vars, OAuth/`impersonation`/SOBO multi-tenant usage, Connect
+  webhooks, database references)
 - **API Mapping** — Maps DocuSign envelopes, recipients, tabs, and events to Anvil
-  equivalents
+  equivalents, and maps DocuSign's multi-account/on-behalf model to Anvil OAuth apps
+  or child organizations
 - **Template Conversion** — Converts DocuSign templates directly into Anvil
   templates, **preserving field geometry, field types, and signer roles**
 - **Code Rewriting** — Replaces SDK calls, rewrites embedded signing and webhook
@@ -32,6 +34,15 @@ This plugin automates that flow with two bundled scripts:
 
 A PDF + Document AI fallback is available for any template that doesn't convert
 cleanly.
+
+## Multi-tenant / send-on-behalf integrations
+
+DocuSign's Authorization Code grant, JWT `impersonation`, per-tenant `accountId`
+switching, and SOBO all have real Anvil equivalents. Anvil is multi-tenant too: an
+Anvil **OAuth app** lets tenants authorize your app against their own organization,
+and **child organizations** give each tenant an isolated org — own templates,
+branding, webhook, and API keys — under one parent. The plugin detects multi-tenant
+usage in discovery and makes the choice an explicit decision.
 
 ## How It Works
 

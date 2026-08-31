@@ -7,10 +7,12 @@ E-Sign.
 ## Capabilities
 
 - **Codebase Discovery** — Scans for all Adobe Sign integration points (SDK usage,
-  REST v6 calls, OAuth/Integration-Key config, env vars, webhooks, database
-  references)
+  REST v6 calls, OAuth/Integration-Key config, `x-api-user` multi-tenant usage, env
+  vars, webhooks, database references)
 - **API Mapping** — Maps Adobe's transient documents, library documents,
-  agreements, participant sets, form fields, and events to Anvil equivalents
+  agreements, participant sets, form fields, and events to Anvil equivalents, and
+  maps Adobe's OAuth-on-behalf / `x-api-user` model to Anvil OAuth apps or child
+  organizations
 - **Template Migration** — Exports Adobe **library documents** as PDFs + metadata,
   uploads to Anvil (Document AI field detection), with a **dynamic-doc** option for
   content-based agreements
@@ -30,8 +32,13 @@ migration effort is **collapsing its access model**, not its documents:
   (or read `api_access_point` from the OAuth token) to find its data-center host
   (`api.na1.adobesign.com`, `api.eu2.adobesign.com`, …) before any real call →
   Anvil has a single fixed host, no discovery step.
-- **`x-api-user` sender impersonation** → Anvil has no impersonation; access
-  control lives in your app.
+- **`x-api-user` sender impersonation** → for a single account, access control just
+  lives in your app. For a multi-tenant integration, it becomes a per-tenant
+  credential instead of a per-call header: an Anvil **OAuth app** (tenants authorize
+  your app against their own organization) or a **child organization** per tenant —
+  an isolated org with its own templates, branding, webhook, and API keys under one
+  parent. The plugin detects this in discovery and makes the choice an explicit
+  decision.
 
 Adobe **library documents** are flat PDFs with positioned form fields, so templates
 migrate via the **PDF + Anvil Document AI** path (the same one the DropboxSign

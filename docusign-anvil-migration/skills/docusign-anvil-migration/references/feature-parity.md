@@ -207,23 +207,64 @@ Check before signing.
 
 ---
 
-## OAuth Multi-Tenant → Separate Orgs or API Keys
+## OAuth Multi-Tenant / Send-On-Behalf → Anvil OAuth Apps or Child Organizations
 
-**DocuSign:** OAuth (Auth Code grant) lets your app act on behalf of other
-DocuSign accounts (multi-tenant SaaS).
+**DocuSign:** The Authorization Code grant lets your app act on behalf of other
+DocuSign accounts; JWT Grant with the `impersonation` scope acts as a specific user;
+`/oauth/userinfo` returns every account a token can reach (each with its own
+`accountId` and `base_uri`); and SOBO (`X-DocuSign-Act-As-User`) plus `brandId` let
+one account send as another user or brand.
 
-**Anvil:** No OAuth-on-behalf equivalent. Each Anvil organization has its own API
-key.
+**Anvil:** Supported — Anvil is multi-tenant too. Two first-class paths cover
+on-behalf sending, plus a lightweight single-org option. Pick one deliberately; it
+determines credential storage and webhook routing.
 
-**Workaround:**
-1. **Single org with template separation** — one Anvil account; track which
-   templates belong to which tenant in your database.
-2. **Separate orgs per tenant** — each tenant gets its own Anvil org and API key
-   (stored encrypted), for full isolation.
-3. **Anvil reseller/white-label program** — contact Anvil for multi-tenant SaaS
-   use cases.
+**Option A — OAuth apps (your tenants own their Anvil accounts).** Register an
+OAuth app on your Anvil organization (`createOAuthApp` / Organization Settings →
+OAuth apps) with an `appName` and `redirectUri`; you get a `clientId` and
+`clientSecret`. Other Anvil organizations authorize your app through the redirect
+flow, and you receive a scoped token that acts against *their* organization. This is
+the closest analogue to DocuSign's Authorization Code grant: you never hold a
+tenant's API key, and either side can revoke access (`revokeOAuthApp`). OAuth is an
+Enterprise feature — confirm it is enabled on your org and get the current
+authorize/token endpoints and scope list from Anvil before you build against it.
 
-**Impact:** High — an architectural decision. Discuss with the developer first.
+**Option B — child organizations (you provision tenants yourself).** An Anvil org
+can be the parent of an unlimited number of child organizations. Each child is a
+real, isolated org: its own templates, branding/theme, users, webhook, and its own
+development and production API keys — while billing and administration roll up to
+the parent. Create children in the dashboard, or via the API with
+`createOrganization(name, slug, parentEid)`, then mint that child's key with
+`addOrganizationAPIKey`. Store the per-child key encrypted and select it per tenant
+at send time. This replaces the `accountId` switching you did after
+`/oauth/userinfo` — the child org *is* the account. Child organizations are an
+Enterprise feature — confirm enablement with Anvil.
+
+**Option C — one org, `replyTo` per packet.** If tenants only need to *appear* as
+the sender (not to own data), stay in a single org and set `replyToName` /
+`replyToEmail` on each `createEtchPacket`. This is the cheapest path but gives no
+data isolation — every tenant's packets and templates live in the same org.
+
+### Mapping
+
+| DocuSign | Anvil |
+|----------|-------|
+| Authorization Code grant; app acts for another account | OAuth app → scoped token against that org (Option A) |
+| JWT Grant + `impersonation` scope + `DOCUSIGN_USER_ID` | Child org per tenant + that child's API key (Option B) |
+| `accountId` / `base_uri` chosen per tenant from `/oauth/userinfo` | The child org's own API key (Option B) — no discovery call |
+| SOBO (`X-DocuSign-Act-As-User`) | Child org's API key (B), or `replyToName`/`replyToEmail` per packet (C) |
+| `brandId` on an envelope | The child org's own CSS theme (see White Labeling), or `replyToName`/`replyToEmail` per packet |
+| One Connect listener fanning out across accounts | Each org (child or OAuth-authorized) carries its own webhook |
+| Per-tenant template libraries | Templates live in each child org (B), or one org with tenant-tagged templates (C) |
+
+**Ask the developer:** do your tenants already have — or want — their own Anvil
+accounts (→ OAuth apps), or does your product provision and own each tenant's
+workspace (→ child organizations)? Do tenants need isolated templates and data, or
+only a distinct sender identity (→ `replyTo` in a single org)?
+
+**Impact:** Medium — a real architectural choice, but there is genuine parity here.
+Decide before writing send code, since the credential lookup and webhook routing
+differ per option.
 
 ---
 
@@ -237,7 +278,10 @@ branding.
 
 **Workaround:** Create a CSS theme (see https://github.com/anvilco/anvil-themes)
 and configure it in the Anvil dashboard under API settings > white labeling. Drop
-the `brandId` from your create calls.
+the `brandId` from your create calls. For multi-tenant apps, per-tenant branding
+lives on each tenant's own organization — a child org (or the tenant's own
+OAuth-authorized org) carries its own theme, so one brand per org replaces one
+`brandId` per envelope.
 
 **Impact:** Low — more powerful, but requires a CSS file.
 
@@ -282,5 +326,5 @@ default path.
 | Voiding | App-level / packet void | Low |
 | Bulk send | Loop with rate limiting | Medium |
 | Signer authentication | Custom auth wall | Medium-High |
-| OAuth multi-tenant | Separate orgs / keys | High |
+| OAuth multi-tenant / SOBO | OAuth apps or child orgs | Medium |
 | White labeling | CSS themes (more powerful) | Low |

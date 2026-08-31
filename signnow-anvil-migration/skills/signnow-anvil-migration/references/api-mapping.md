@@ -72,6 +72,9 @@ const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 
 A single long-lived API key. **No Basic → Bearer exchange, no client
 id/secret, no token refresh.** The two-step handshake collapses to one constructor.
+Multi-tenant integrations that used signNow's authorization-code or password grant
+resolve a *per-tenant* credential instead — an Anvil OAuth token for the tenant's own
+organization, or that tenant's child-org API key. See `feature-parity.md`.
 
 ---
 
@@ -502,10 +505,10 @@ rendered the PDF you expected.
 |---------|-------|-------|
 | `SIGNNOW_CLIENT_ID` / `SIGNNOW_CLIENT_SECRET` (Basic credential) | `ANVIL_API_KEY` | Single key; no Basic → Bearer exchange |
 | Bearer access token (from `POST /oauth2/token`) | `ANVIL_API_KEY` | No token exchange or refresh |
-| `SIGNNOW_USERNAME` / `SIGNNOW_PASSWORD` (password grant) | N/A | No user impersonation |
+| `SIGNNOW_USERNAME` / `SIGNNOW_PASSWORD` (password grant) | N/A, or a child-org API key per tenant | Single-tenant needs no impersonation; multi-tenant maps to per-org credentials |
 | `refresh_token` / token expiry handling | N/A | Anvil keys are long-lived |
 | Eval host `api.eval-signnow.com` (sandbox) | `isTest: true` + dev key | Watermarked test packets |
-| OAuth authorization-code grant (multi-tenant) | Separate orgs or API keys | See feature-parity.md |
+| OAuth authorization-code grant (multi-tenant) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 
 signNow's **two-step auth** (Basic client credential → `POST /oauth2/token` →
 Bearer token on every other call) collapses to a single `ANVIL_API_KEY`.

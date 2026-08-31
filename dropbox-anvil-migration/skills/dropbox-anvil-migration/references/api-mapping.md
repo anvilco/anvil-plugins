@@ -37,7 +37,7 @@ import Anvil from '@anvilco/anvil'
 const anvilClient = new Anvil({ apiKey: process.env.ANVIL_API_KEY })
 ```
 
-Anvil uses a single client instance for all operations. No separate API classes needed.
+Anvil uses a single client instance for all operations. No separate API classes needed. Multi-tenant integrations that used DropboxSign's OAuth flow resolve a *per-tenant* credential instead — an Anvil OAuth token for the tenant's own organization, or that tenant's child-org API key. See `feature-parity.md`.
 
 ---
 
@@ -406,10 +406,10 @@ signers: [
 | DropboxSign | Anvil | Notes |
 |------------|-------|-------|
 | `HELLOSIGN_API_KEY` | `ANVIL_API_KEY` | Single key for all operations |
-| `HELLOSIGN_CLIENT_ID` | N/A | Anvil doesn't need a separate client ID |
+| `HELLOSIGN_CLIENT_ID` | N/A for embedded signing; an Anvil OAuth app's `clientId` for multi-tenant | Embedded signing needs no client ID; see feature-parity.md for OAuth |
 | `DROPBOX_SIGN_API_KEY` | `ANVIL_API_KEY` | |
-| `DROPBOX_SIGN_CLIENT_ID` | N/A | |
-| OAuth (multi-tenant) | Separate orgs or API keys | See feature-parity.md |
+| `DROPBOX_SIGN_CLIENT_ID` | Same as `HELLOSIGN_CLIENT_ID` above | |
+| OAuth (multi-tenant) | Anvil OAuth app, or a child org (+ its own API key) per tenant | Both supported — see feature-parity.md |
 
 ---
 

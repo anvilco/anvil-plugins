@@ -98,8 +98,8 @@ The skill includes:
 
 A guided migration skill that walks developers through replacing DropboxSign (HelloSign) e-signature integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for all DropboxSign/HelloSign SDK usage, API calls, env vars, webhooks, and database references
-- **API Mapping** — Maps DropboxSign calls to Anvil equivalents with before/after code examples
+- **Discovery** — Scans for all DropboxSign/HelloSign SDK usage, API calls, env vars, API App / OAuth multi-tenant usage, webhooks, and database references
+- **API Mapping** — Maps DropboxSign calls to Anvil equivalents with before/after code examples, and maps the API App + OAuth on-behalf model to Anvil OAuth apps or child organizations
 - **Template Migration** — Downloads templates from DropboxSign, uploads to Anvil, generates DB migration scripts
 - **Code Rewriting** — Replaces SDK calls, webhook handlers, embedded signing, and environment variables
 - **Verification** — Guides end-to-end testing and cleanup of old dependencies
@@ -116,9 +116,9 @@ The skill includes:
 
 A guided migration skill that walks developers through replacing DocuSign eSignature integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for all DocuSign SDK usage (`docusign-esign`), API calls, env vars, Connect webhooks, and database references
+- **Discovery** — Scans for all DocuSign SDK usage (`docusign-esign`), API calls, env vars, OAuth/`impersonation`/SOBO multi-tenant usage, Connect webhooks, and database references
 - **Template Conversion** — Converts DocuSign templates **directly** into Anvil templates via Anvil's DocuSign-JSON converter, preserving field geometry, field types, and signer roles — no manual re-tagging
-- **API Mapping** — Maps envelopes, `templateRoles`, tabs, recipient views, and Connect events to Anvil equivalents
+- **API Mapping** — Maps envelopes, `templateRoles`, tabs, recipient views, and Connect events to Anvil equivalents, and maps DocuSign's multi-account/on-behalf model to Anvil OAuth apps or child organizations
 - **Code Rewriting** — Replaces the SDK, rewrites embedded signing (`createRecipientView` → `generateEtchSignURL`) and webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing and cleanup
 
@@ -133,8 +133,8 @@ The skill includes:
 
 A guided migration skill that walks developers through replacing PandaDoc integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for all PandaDoc SDK usage, API calls, env vars, webhook subscriptions, and database references
-- **API Mapping** — Maps PandaDoc's roles/fields/tokens model, async document create + send, signing sessions, and webhooks to Anvil equivalents
+- **Discovery** — Scans for all PandaDoc SDK usage, API calls, env vars, OAuth2/workspace multi-tenant usage, webhook subscriptions, and database references
+- **API Mapping** — Maps PandaDoc's roles/fields/tokens model, async document create + send, signing sessions, and webhooks to Anvil equivalents, and maps PandaDoc's OAuth2/workspace model to Anvil OAuth apps or child organizations
 - **Template Migration** — PandaDoc has no flat-PDF export, so templates are migrated by rendering a base PDF and re-detecting fields with Anvil Document AI, with field geometry captured where available (tiered strategy)
 - **Code Rewriting** — Replaces the SDK, collapses the create→poll→send flow into a single `createEtchPacket`, rewrites embedded signing and webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing and cleanup
@@ -150,8 +150,8 @@ The skill includes:
 
 A guided migration skill that walks developers through replacing Apryse Xodo Sign (formerly eversign) integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for eversign / Xodo Sign SDK usage, API calls (`access_key`/`business_id`), env vars, webhook events, and database references
-- **API Mapping** — Maps documents, signers/roles, positioned fields, template merge fields, embedded signing, and webhook events to Anvil equivalents
+- **Discovery** — Scans for eversign / Xodo Sign SDK usage, API calls (`access_key`/`business_id`), env vars, OAuth/multi-business usage, webhook events, and database references
+- **API Mapping** — Maps documents, signers/roles, positioned fields, template merge fields, embedded signing, and webhook events to Anvil equivalents, and maps eversign's OAuth-on-behalf / multi-business model to Anvil OAuth apps or child organizations
 - **Template Migration** — Flat-PDF templates migrate via PDF download + Anvil Document AI field detection, then field re-tagging
 - **Code Rewriting** — Replaces the SDK, rewrites embedded signing and webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing and cleanup
@@ -162,8 +162,8 @@ The skill includes a terminology glossary, complete API mapping, feature-parity 
 
 A guided migration skill that walks developers through replacing Adobe Acrobat Sign (eSign REST API v6) integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for Adobe Sign SDK/REST usage, OAuth + Integration Key config, base-URI discovery, webhook handlers, and database references
-- **API Mapping** — Maps the OAuth + shard base-URI model to Anvil's single API key, and agreements/participant sets/transient & library documents/form fields to Anvil equivalents
+- **Discovery** — Scans for Adobe Sign SDK/REST usage, OAuth + Integration Key config, base-URI discovery, `x-api-user` multi-tenant usage, webhook handlers, and database references
+- **API Mapping** — Maps the OAuth + shard base-URI model to Anvil's single API key, agreements/participant sets/transient & library documents/form fields to Anvil equivalents, and Adobe's OAuth-on-behalf / `x-api-user` model to Anvil OAuth apps or child organizations
 - **Template Migration** — Library documents migrate via PDF + Anvil Document AI, with a dynamic-doc option for content-heavy agreements
 - **Code Rewriting** — Replaces the client, rewrites embedded signing (`signingUrls` → `generateEtchSignURL`) and webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing and cleanup
@@ -174,8 +174,8 @@ The skill includes a terminology glossary, complete API mapping, feature-parity 
 
 A guided migration skill that walks developers through replacing signNow (airSlate SignNow) integrations with Anvil Etch E-Sign:
 
-- **Discovery** — Scans for signNow SDK/REST usage, OAuth config, role-based invites, event subscriptions, and database references
-- **API Mapping** — Maps documents/templates, roles, positioned field elements, invites (with signing order), embedded invites, and event subscriptions to Anvil equivalents
+- **Discovery** — Scans for signNow SDK/REST usage, OAuth config, multi-tenant/on-behalf usage, role-based invites, event subscriptions, and database references
+- **API Mapping** — Maps documents/templates, roles, positioned field elements, invites (with signing order), embedded invites, and event subscriptions to Anvil equivalents, and maps signNow's authorization-code / per-user password grant to Anvil OAuth apps or child organizations
 - **Template Migration** — Flat-PDF templates migrate via PDF download + Anvil Document AI field detection, then field re-tagging
 - **Code Rewriting** — Replaces the client, rewrites embedded signing and webhook handlers, updates env vars and DB schema
 - **Verification** — Guides end-to-end testing and cleanup

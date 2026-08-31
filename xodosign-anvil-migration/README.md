@@ -8,10 +8,12 @@ Sign is now part of Apryse; the product began life as eversign, and its REST API
 ## Capabilities
 
 - **Codebase Discovery** — Scans for all Xodo Sign / eversign integration points
-  (SDK usage, REST calls, `access_key` / `business_id`, webhook events, database
-  references)
+  (SDK usage, REST calls, `access_key` / `business_id`, OAuth/multi-business usage,
+  webhook events, database references)
 - **API Mapping** — Maps eversign documents, signers, recipients, positioned form
-  fields, template merge fields, and log/webhook events to Anvil equivalents
+  fields, template merge fields, and log/webhook events to Anvil equivalents, and
+  maps eversign's OAuth-on-behalf / multi-business model to Anvil OAuth apps or
+  child organizations
 - **Template Migration** — Migrates flat-PDF templates (positioned fields) to Anvil
   via Document AI, with an optional dynamic-doc target for content-based templates
 - **Code Rewriting** — Replaces the `eversign` SDK, collapses upload → create →
@@ -33,6 +35,16 @@ The migration is a good structural fit: eversign templates are **flat PDFs with
 positioned fields** (x/y/page coordinates), which map cleanly onto Anvil PDF
 templates (Casts) via Document AI field detection — the same path the DropboxSign
 plugin uses. Content-heavy templates can optionally target Anvil dynamic docs.
+
+## Multi-business / OAuth integrations
+
+An eversign account can hold several **businesses** (selected per request via
+`business_id`), and its OAuth flow lets your app act for other accounts. Both have
+real Anvil equivalents. An Anvil **OAuth app** lets tenants authorize your app against
+their own organization, and a **child organization** is the natural landing spot for
+each business — an isolated org with its own templates, branding, webhook, and API
+keys under one parent, where a business had none of its own. The plugin detects
+multi-tenant usage in discovery and makes the choice an explicit decision.
 
 ## How It Works
 

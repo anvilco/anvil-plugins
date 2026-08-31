@@ -126,6 +126,28 @@ templateDetails
 createDocumentAttachment
 ```
 
+### Search for multi-tenant / on-behalf usage
+
+An OAuth2 authorization-code flow, multiple workspaces, or per-tenant API keys mean
+the integration serves more than one PandaDoc account. Anvil supports this too, but
+the shape of the port depends on which pattern is in use, so find it in discovery —
+not in code migration:
+
+```
+oauth2/access_token     (PandaDoc token exchange)
+PANDADOC_CLIENT_ID
+PANDADOC_CLIENT_SECRET
+refresh_token
+workspace / workspace_id
+sender                  (send-as on document create)
+tenantId / accountId    (per-tenant PandaDoc credentials in your DB or config)
+```
+
+Check whether the app stores per-tenant PandaDoc tokens or keys, whether it selects a
+workspace per request, and whether webhook subscriptions are registered per tenant. If
+any of this is present, flag it for the Phase 2 architecture decision (OAuth app vs.
+child org per tenant vs. one org with per-packet `replyTo`).
+
 ### Search for webhook handlers
 
 ```
@@ -167,6 +189,8 @@ Present a structured summary:
 5. **Webhook handlers** — subscription routes + events handled
 6. **Database references** — tables/columns storing PandaDoc IDs
 7. **Templates used** — template UUIDs hardcoded or in config
+8. **Multi-tenancy** — whether the app sends on behalf of other accounts/tenants
+   (per-tenant OAuth tokens or API keys, workspaces, the `sender` field)
 
 Ask: **"Does this look complete, or are there integration points I missed?"**
 
@@ -192,6 +216,10 @@ attention to:
 - **Tokens vs fields** — tokens become fill data, not signer fields.
 - **Block/content templates** — the dynamic-doc vs PDF+Document-AI decision (Phase 4).
 - **Pricing tables / conditional content** — partial support; confirm what's needed.
+- **Multi-tenant / on-behalf architecture** — if discovery found OAuth2, workspaces,
+  or per-tenant keys, decide now between an Anvil OAuth app, a child org per tenant,
+  and one org with per-packet `replyTo`. It is supported either way, but the choice
+  shapes credential storage and webhook routing.
 
 Ask: **"Are you comfortable with these mappings? Any concerns before we proceed?"**
 
@@ -305,6 +333,11 @@ for Anvil patterns.
 Replace the PandaDoc `Configuration` + `DocumentsApi` with a single
 `new Anvil({ apiKey })`.
 
+If Phase 2 chose a multi-tenant path, the key is resolved **per tenant** rather than
+read from one env var — an Anvil OAuth token for the tenant's own organization, or
+that tenant's child-org API key looked up at send time. Construct the client per
+request instead of once at module load.
+
 ### Rewrite document creation + send
 
 Collapse the PandaDoc **create → poll → send** flow into a single
@@ -334,6 +367,11 @@ Map PandaDoc events to Anvil events:
 
 - Replace `PANDADOC_API_KEY` (and sandbox/webhook keys) with `ANVIL_API_KEY`
 - Replace sandbox-key usage with `isTest: true`
+- OAuth vars (`PANDADOC_CLIENT_ID`, `PANDADOC_CLIENT_SECRET`): if OAuth was only an
+  auth mechanism for a single account, drop them. If it was used to act on behalf of
+  other accounts, replace them with the credentials for the multi-tenant path chosen
+  in Phase 2 — an Anvil OAuth app's client ID/secret, or per-tenant child-org API
+  keys (stored encrypted, looked up per tenant at send time)
 - Update `.env.example`
 
 ### Update database references

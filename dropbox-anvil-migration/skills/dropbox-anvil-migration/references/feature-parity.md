@@ -157,24 +157,39 @@ signers: [
 
 **Anvil:** CSS-based theming with full control over the signing UI appearance. Host a custom CSS file and configure it in the Anvil dashboard under API settings > White labeling.
 
-**Workaround:** Create a CSS theme file using the Anvil theme structure (see https://github.com/anvilco/anvil-themes). This gives more control than DropboxSign's white labeling — you can customize fonts, colors, spacing, and layout.
+**Workaround:** Create a CSS theme file using the Anvil theme structure (see https://github.com/anvilco/anvil-themes). This gives more control than DropboxSign's white labeling — you can customize fonts, colors, spacing, and layout. For multi-tenant apps, per-tenant branding lives on each tenant's own organization — a child org (or the tenant's own OAuth-authorized org) carries its own theme, replacing the API App's `white_labeling_options`.
 
 **Impact:** Low — more powerful than DropboxSign's approach, but requires creating a CSS file.
 
 ---
 
-## OAuth Multi-Tenant → Separate Orgs or API Key Separation
+## OAuth Multi-Tenant → Anvil OAuth Apps or Child Organizations
 
-**DropboxSign:** OAuth flow allows your app to act on behalf of other HelloSign accounts (multi-tenant SaaS).
+**DropboxSign:** An API App (`client_id` / `client_secret`) plus the OAuth flow lets your app act on behalf of other Dropbox Sign accounts (multi-tenant SaaS) — each grant returns an account-scoped token, and the app's `white_labeling_options` brand the signing UI for every account that uses it.
 
-**Anvil:** No OAuth equivalent. Each Anvil organization has its own API key.
+**Anvil:** Supported — Anvil is multi-tenant too. Two first-class paths cover on-behalf sending, plus a lightweight single-org option. Pick one deliberately; it determines credential storage and webhook routing.
 
-**Workaround:** Options depend on your multi-tenant architecture:
-1. **Single Anvil org with template separation** — Use one Anvil account and organize templates by tenant. Track which templates belong to which tenant in your database.
-2. **Separate Anvil orgs per tenant** — Each tenant gets their own Anvil organization and API key. Store API keys per tenant in your database (encrypted). This provides full isolation.
-3. **Anvil reseller program** — Contact Anvil about their reseller/white-label program for multi-tenant SaaS use cases.
+**Option A — OAuth apps (your tenants own their Anvil accounts).** Register an OAuth app on your Anvil organization (`createOAuthApp` / Organization Settings > OAuth apps) with an `appName` and `redirectUri`; you get a `clientId` and `clientSecret`. Other Anvil organizations authorize your app through the redirect flow, and you receive a scoped token that acts against *their* organization. This is the direct analogue of a Dropbox Sign API App plus OAuth grant: you never hold a tenant's API key, and either side can revoke access (`revokeOAuthApp`). OAuth is an Enterprise feature — confirm it is enabled on your org and get the current authorize/token endpoints and scope list from Anvil before you build against it.
 
-**Impact:** High — requires architectural decisions. Discuss with the developer before proceeding.
+**Option B — child organizations (you provision tenants yourself).** An Anvil org can be the parent of an unlimited number of child organizations. Each child is a real, isolated org: its own templates, branding/theme, users, webhook, and its own development and production API keys — while billing and administration roll up to the parent. Create children in the dashboard, or via the API with `createOrganization(name, slug, parentEid)`, then mint that child's key with `addOrganizationAPIKey`. Store the per-child key encrypted and select it per tenant at send time. Use this when your product owns each tenant's workspace rather than connecting to an account the tenant already has. Child organizations are an Enterprise feature — confirm enablement with Anvil.
+
+**Option C — one org, `replyTo` per packet.** If tenants only need to *appear* as the sender (not to own data), stay in a single org and set `replyToName` / `replyToEmail` on each `createEtchPacket`. This is the cheapest path but gives no data isolation — every tenant's packets and templates live in the same org.
+
+### Mapping
+
+| DropboxSign | Anvil |
+|-------------|-------|
+| API App (`client_id` / `client_secret`) | Anvil OAuth app (`clientId` / `clientSecret`) — Option A |
+| OAuth grant; app acts for another account | Scoped token against that tenant's own Anvil org (Option A) |
+| Per-tenant OAuth tokens or API keys in your DB | Per-tenant child-org API keys, stored encrypted (Option B) |
+| `account_id` selected per request | The child org's own API key (Option B) — no account selection |
+| API App `white_labeling_options` | The child org's own CSS theme (see White Labeling), or the tenant org's theme in Option A |
+| One `callback_url` fanning out across accounts | Each org (child or OAuth-authorized) carries its own webhook |
+| Per-tenant template libraries | Templates live in each child org (B), or one org with tenant-tagged templates (C) |
+
+**Ask the developer:** do your tenants already have — or want — their own Anvil accounts (→ OAuth apps), or does your product provision and own each tenant's workspace (→ child organizations)? Do tenants need isolated templates and data, or only a distinct sender identity (→ `replyTo` in a single org)?
+
+**Impact:** Medium — a real architectural choice, but there is genuine parity here. Decide before writing send code, since the credential lookup and webhook routing differ per option.
 
 ---
 
@@ -205,5 +220,5 @@ signers: [
 | Signing order | Direct equivalent (`routingOrder`) | None |
 | Signing redirect URL | `AnvilEmbedFrame` `onEvent` | None |
 | White labeling | CSS themes (more powerful) | Low |
-| OAuth multi-tenant | Separate orgs or template separation | High |
+| OAuth multi-tenant | OAuth apps or child orgs | Medium |
 | Request expiration | App-level + sign URL TTL | Low-Medium |

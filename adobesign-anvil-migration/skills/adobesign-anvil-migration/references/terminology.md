@@ -35,5 +35,9 @@ field aliases, prefill data, embedded sign URLs, and webhook actions.
 | `AGREEMENT_WORKFLOW_COMPLETED` | `etchPacketComplete` | All participants done; documents downloadable. |
 | `combinedDocument` + `auditTrail` | `downloadDocuments` | Signed PDF(s) + signing certificate (one zip in Anvil). |
 | Web form (widget, `POST /widgets`) | (no direct equivalent — Anvil Workflows / embedded) | A hosted, reusable public signing form. |
-| OAuth2 / Integration Key + `GET /baseUris` + `x-api-user` | `ANVIL_API_KEY` | Auth. One key; no shard discovery, no impersonation. |
+| OAuth2 / Integration Key + `GET /baseUris` + `x-api-user` | `ANVIL_API_KEY` | Auth. One key per organization; single-tenant integrations need no shard discovery or impersonation. |
+| OAuth on-behalf (act as another account) | Anvil OAuth app | Tenants authorize your app against their own Anvil org; you get a scoped token. Enterprise feature. |
+| Tenant account / group (`groupId`) | Child organization | A parent org can own unlimited child orgs, each with its own templates, theme, users, webhook, and API keys. Enterprise feature. |
+| `x-api-user` / `x-on-behalf-of-user` | Child org's API key, or `replyToName`/`replyToEmail` | Full isolation vs. sender identity only. |
+| Account-level branding | Child org's CSS theme | Anvil brands per organization. |
 | Custom fields / external ID metadata | Your own database | Anvil packets have no metadata bag. |

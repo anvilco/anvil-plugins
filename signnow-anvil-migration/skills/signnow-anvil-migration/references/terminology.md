@@ -31,6 +31,10 @@ signer IDs, field aliases, signers, embedded signers, and webhook actions.
 | `document.update` / `invite.update` | `signerComplete` | Signer-level progress (closest analog — see `api-mapping.md`). |
 | Download (`GET /document/{id}/download?type=collapsed`) | `downloadDocuments` | The flattened signed PDF. |
 | Signing history / audit trail (separate download) | Signing certificate | Audit trail; Anvil bundles it into the download zip. |
-| OAuth2 Bearer token (Basic client credential → `POST /oauth2/token`) | `ANVIL_API_KEY` | Auth. One key; no token exchange, no client id/secret. |
+| OAuth2 Bearer token (Basic client credential → `POST /oauth2/token`) | `ANVIL_API_KEY` | Auth. One key per organization; single-tenant integrations need no token exchange or client id/secret. |
+| Authorization-code grant (act as another account) | Anvil OAuth app | Tenants authorize your app against their own Anvil org; you get a scoped token. Enterprise feature. |
+| Tenant account (password grant per user) | Child organization | A parent org can own unlimited child orgs, each with its own templates, theme, users, webhook, and API keys. Enterprise feature. |
+| Sending as another account | Child org's API key, or `replyToName`/`replyToEmail` | Full isolation vs. sender identity only. |
+| Account branding | Child org's CSS theme | Anvil brands per organization. |
 | Eval host (`api.eval-signnow.com`) | `isTest: true` + dev key | Watermarked, non-billed test packets. |
 | (no per-document metadata bag) | Your own database | Anvil packets have no metadata bag either — store source metadata yourself. |
